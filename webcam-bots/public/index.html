@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BEY CB VIEWER BOT | Control Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+
+<body>
+    <!-- Loading screen shown while auth check runs (prevents black flash) -->
+    <div id="loading-screen" style="
+        position:fixed; inset:0; background:#0a0b10;
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        z-index:9999; gap:1.25rem;
+        transition: opacity 0.3s ease;
+    ">
+        <div style="font-size:2.5rem; filter:drop-shadow(0 0 20px rgba(99,102,241,0.6))">🚀</div>
+        <div style="
+            font-family:'Inter',sans-serif; font-size:1.1rem; font-weight:700;
+            background:linear-gradient(135deg,#a78bfa,#818cf8,#60a5fa);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+            letter-spacing:1px;
+        ">BEY CB BOT</div>
+        <div style="display:flex; gap:6px; margin-top:0.5rem;">
+            <span style="width:8px;height:8px;background:#6366f1;border-radius:50%;animation:blink 1.2s 0s infinite"></span>
+            <span style="width:8px;height:8px;background:#6366f1;border-radius:50%;animation:blink 1.2s 0.2s infinite"></span>
+            <span style="width:8px;height:8px;background:#6366f1;border-radius:50%;animation:blink 1.2s 0.4s infinite"></span>
+        </div>
+        <style>@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}</style>
+    </div>
+
+    <div class="app-container" id="app-container" style="display:none">
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">🚀</span>
+                <h1>BEY CB BOT</h1>
+            </div>
+            <nav>
+                <div class="nav-item active" data-tab="dashboard" title="Dashboard">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-text">Dashboard</span>
+                </div>
+                <div class="nav-item" data-tab="accounts" title="IDs Manager">
+                    <span class="nav-icon">🗂️</span>
+                    <span class="nav-text">IDs Manager</span>
+                </div>
+                <div class="nav-item" data-tab="targets" title="Target Models">
+                    <span class="nav-icon">🎯</span>
+                    <span class="nav-text">Target Models</span>
+                </div>
+                <div class="nav-item" data-tab="messages" title="Messages">
+                    <span class="nav-icon">💬</span>
+                    <span class="nav-text">Messages</span>
+                </div>
+                <div class="nav-item" data-tab="settings" title="Settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Settings</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="dot pulse"></span>
+                    <span>System Active</span>
+                </div>
+                <button id="btn-logout" style="margin-top:0.75rem;width:100%;padding:0.5rem;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#f87171;font-size:0.8rem;cursor:pointer;font-family:inherit;transition:background 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'">🔓 Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <div class="header-info">
+                    <h2>Dashboard</h2>
+                    <p>Manage your Chaturbate automation from one place.</p>
+                </div>
+                <div class="stats-row">
+                    <div class="mini-stat">
+                        <span class="label">IP Address</span>
+                        <span class="value highlight" id="stat-current-ip">Detecting...</span>
+                    </div>
+                    <div class="mini-stat">
+                        <span class="label">Active Browsers</span>
+                        <span class="value accent" id="stat-active-browsers">0</span>
+                    </div>
+                    <div class="mini-stat">
+                        <span class="label">Total Accounts</span>
+                        <span class="value" id="stat-total-accounts">0</span>
+                    </div>
+                    <div class="mini-stat">
+                        <span class="label">Total Targets</span>
+                        <span class="value" id="stat-total-targets">0</span>
+                    </div>
+                    <div class="mini-stat">
+                        <span class="label">Total Messages</span>
+                        <span class="value" id="stat-total-messages">0</span>
+                    </div>
+                    <div class="mini-stat">
+                        <span class="label">Today Messages</span>
+                        <span class="value" id="stat-today-messages">0</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="tab-content active">
+                <div class="grid-container">
+                    <!-- Cards here... (I will wrap them in the next step) -->
+                    <!-- Account Viewer Card -->
+                    <section class="card control-card">
+                        <div class="card-header">
+                            <h3>Account Viewer</h3>
+                            <span class="status-badge" id="status-anon">Stopped</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="hintText" style="margin-bottom: 1rem;">Opens one browser instance for every account in your ID Manager.</p>
+                            <div class="card-actions">
+                                <button class="btn btn-primary" id="btn-start-anon">Start</button>
+                                <button class="btn btn-danger" id="btn-stop-anon" disabled>Stop All</button>
+                            </div>
+                        </div>
+                    </section>
+
+
+                    <!-- Active Browsers Tracker Card -->
+                    <section class="card control-card browser-tracker-card">
+                        <div class="card-header">
+                            <h3>Active Browsers</h3>
+                            <span class="status-badge running">Tracking</span>
+                        </div>
+                        <div class="card-body tracker-body">
+                            <div class="big-number-display">
+                                <span id="active-browsers-count">0</span>
+                                <small>Windows Running</small>
+                            </div>
+                            <p class="hintText">Monitors real-time Chrome instances on this machine.</p>
+                        </div>
+                    </section>
+
+                </div>
+
+                <!-- Live Terminal Console -->
+                <section class="card console-card full-width-card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <h3>Live Activity Terminal</h3>
+                        <div class="header-actions">
+                            <button class="btn btn-danger btn-sm" id="btn-clear-console">Clear Terminal</button>
+                        </div>
+                    </div>
+                    <div class="console-body" id="console-output">
+                        <div class="log-entry system">Welcome to BEY CB BOT. Waiting for activity...</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Accounts Manager Tab -->
+            <div id="tab-accounts" class="tab-content">
+                <section class="card full-width-card">
+                    <div class="card-header">
+                        <h3>IDs Manager</h3>
+                        <div class="header-actions">
+                            <button class="btn btn-secondary btn-sm" id="btn-toggle-all-accounts" title="Toggle all automation">👁 All</button>
+                            <button class="btn btn-primary btn-sm" id="btn-add-account">+ Add New ID</button>
+                        </div>
+                    </div>
+                    <div class="accounts-table-container">
+                        <table class="accounts-table">
+                            <thead>
+                                <tr>
+                                    <th>Auto</th>
+                                    <th>Proxies (up to 5)</th>
+                                    <th>Cookies</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accounts-list">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-pagination">
+                        <button class="btn btn-secondary btn-sm" id="accounts-prev">Prev</button>
+                        <span class="page-info" id="accounts-page-info">Page 1 / 1</span>
+                        <button class="btn btn-secondary btn-sm" id="accounts-next">Next</button>
+                    </div>
+                </section>
+            </div>
+
+
+            <!-- Target Models Tab -->
+            <div id="tab-targets" class="tab-content">
+                <section class="card full-width-card">
+                    <div class="card-header">
+                        <h3>Target Models</h3>
+                        <div class="header-actions">
+                            <button class="btn btn-secondary btn-sm" id="btn-toggle-all-targets" title="Toggle all automation">👁 All</button>
+                            <button class="btn btn-primary btn-sm" id="btn-add-target">+ Add Target Model</button>
+                        </div>
+                    </div>
+                    <div class="accounts-table-container">
+                        <table class="accounts-table">
+                            <thead>
+                                <tr>
+                                    <th>Auto</th>
+                                    <th>Model Username</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="targets-list">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-pagination">
+                        <button class="btn btn-secondary btn-sm" id="targets-prev">Prev</button>
+                        <span class="page-info" id="targets-page-info">Page 1 / 1</span>
+                        <button class="btn btn-secondary btn-sm" id="targets-next">Next</button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Messages Tab -->
+            <div id="tab-messages" class="tab-content">
+                <section class="card full-width-card">
+                    <div class="card-header">
+                        <h3>Message Injection</h3>
+                        <div class="header-actions">
+                            <button class="btn btn-primary btn-sm" id="btn-save-messages">Save Messages</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <label for="msg-texts">Messages (one per line)</label>
+                            <textarea id="msg-texts" placeholder="Hey there!\nJust stopping by to say hi.\nHope your day is going great!"></textarea>
+                        </div>
+                        <span class="hintText">These lines are used for random auto messages. Set toggle + intervals in Settings.</span>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="tab-settings" class="tab-content">
+                <section class="card full-width-card">
+                    <div class="card-header">
+                        <h3>Settings & Integrations</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="settings-grid">
+                            <div class="settings-group settings-card">
+                                <h4><span>📢</span> Telegram Notifications</h4>
+                                <span class="hintText">Get notified on your phone when a bot starts.</span>
+
+                                <div class="input-group">
+                                    <label>Bot Token (from @BotFather)</label>
+                                    <input type="password" id="tg-token" placeholder="Enter your bot token">
+                                </div>
+
+                                <div class="input-group">
+                                    <label>Chat IDs (Comma separated for multiple)</label>
+                                    <input type="text" id="tg-chats" placeholder="e.g. 12345678, 87654321">
+                                </div>
+
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" id="btn-save-settings">Save All Settings</button>
+                                </div>
+                            </div>
+
+                            <div class="settings-group settings-card">
+                                <h4><span>🧠</span> Browser Mode</h4>
+                                <span class="hintText">Control how the cookie viewer browsers run.</span>
+
+                                <div class="input-group">
+                                    <label for="cookie-headless">Cookie Viewer Headless</label>
+                                    <div class="toggle-row">
+                                        <input type="checkbox" id="cookie-headless">
+                                        <span>Run without visible windows (faster, less visible)</span>
+                                    </div>
+                                </div>
+                                <span class="hintText">Use “Save All Settings” to apply changes.</span>
+                            </div>
+
+                            <div class="settings-group settings-card">
+                                <h4><span>💬</span> Auto Chat Messages</h4>
+                                <span class="hintText">Optional randomized chat messages while bots are running.</span>
+
+                                <div class="input-group">
+                                    <label for="msg-enabled">Enable Auto Messages</label>
+                                    <div class="toggle-row">
+                                        <input type="checkbox" id="msg-enabled">
+                                        <span>Send chat messages at random intervals</span>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="input-group">
+                                        <label for="msg-min-minutes">Min Interval (minutes)</label>
+                                        <input type="number" id="msg-min-minutes" min="2" max="60" step="1" value="2">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="msg-max-minutes">Max Interval (minutes)</label>
+                                        <input type="number" id="msg-max-minutes" min="2" max="60" step="1" value="5">
+                                    </div>
+                                </div>
+                                <span class="hintText">Manage message templates in the Messages tab.</span>
+                            </div>
+
+                            <div class="settings-group settings-card">
+                                <h4><span>👤</span> Employee Logins</h4>
+                                <span class="hintText">Employees can manage accounts and target models only.</span>
+
+                                <div id="employees-list" class="employee-grid"></div>
+
+                                <div class="employee-form">
+                                    <div class="input-group">
+                                        <label>New Employee Username</label>
+                                        <input type="text" id="employee-username" placeholder="employee_name">
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label>New Employee Password</label>
+                                        <input type="password" id="employee-password" placeholder="Minimum 4 characters">
+                                    </div>
+
+                                    <div class="card-actions">
+                                        <button class="btn btn-primary" id="btn-add-employee">Create Employee Login</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-group settings-card">
+                                <h4><span>🔑</span> Change Password</h4>
+                                <span class="hintText">Update your dashboard login password.</span>
+
+                                <div class="input-group" style="margin-top:1rem;">
+                                    <label>New Password</label>
+                                    <input type="password" id="new-password" placeholder="Enter new password">
+                                </div>
+                                <div class="input-group">
+                                    <label>Confirm Password</label>
+                                    <input type="password" id="confirm-password" placeholder="Confirm new password">
+                                </div>
+                                <p id="pw-msg" style="font-size:0.85rem;margin-top:0.5rem;min-height:1.2em;"></p>
+
+                                <div class="card-actions">
+                                    <button class="btn btn-danger" id="btn-change-password">Change Password</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal-box">
+            <div class="modal-icon">🚀</div>
+            <div class="modal-title">Start All Viewers?</div>
+            <div class="modal-desc">
+                This will launch one browser per account that has cookies set.<br>
+                Make sure your accounts and target model are configured.
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="modal-confirm">Start Bots</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=20260516"></script>
+</body>
+
+</html>

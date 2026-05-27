@@ -1,0 +1,17 @@
+selenium
+undetected-chromedriver
+fastapi
+uvicorn
+python-socketio
+requests
+websockets
+pydantic-settings
+python-multipart
+aiohttp
+aiohttp-socks
+sqlalchemy
+aiosqlite
+asyncpg
+greenlet
+httpx
+psutil

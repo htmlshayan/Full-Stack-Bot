@@ -1,0 +1,75 @@
+{
+  "ig": {
+    "base_url": "http://127.0.0.1:5000",
+    "username": "bey",
+    "password": "#beyinstabot!"
+  },
+  "cb": {
+    "base_url": "http://127.0.0.1:3000",
+    "socket_url": "http://127.0.0.1:3000",
+    "username": "bey",
+    "password": "#beycbbot!"
+  },
+  "polling": {
+    "control_interval_sec": 5,
+    "events_timeout_sec": 12,
+    "stats_interval_sec": 60,
+    "http_timeout_sec": 20
+  },
+  "policy": {
+    "mode": "single",
+    "priority_usernames": [
+      "elliebey",
+      "bellsky",
+      "crylust",
+      "kiobey",
+      "maexbey",
+      "oliviabey",
+      "shaybey"
+    ]
+  },
+  "models": [
+    {
+      "label": "Ellie",
+      "username": "elliebey",
+      "token": "O81WjjhzYA0I1cFzXi3FtE3e",
+      "events_url": "https://eventsapi.chaturbate.com/events/elliebey/O81WjjhzYA0I1cFzXi3FtE3e/"
+    },
+    {
+      "label": "BellSky",
+      "username": "bellsky",
+      "token": "HW44SkVYAYh1B5cflpcAujXo",
+      "events_url": "https://eventsapi.chaturbate.com/events/bellsky/HW44SkVYAYh1B5cflpcAujXo/"
+    },
+    {
+      "label": "Tessa",
+      "username": "crylust",
+      "token": "61Io3dNxXGlzDPLgDV9bDuzd",
+      "events_url": "https://eventsapi.chaturbate.com/events/crylust/61Io3dNxXGlzDPLgDV9bDuzd/"
+    },
+    {
+      "label": "Kio",
+      "username": "kiobey",
+      "token": "dYwGoA38I4kgSo3N2vGcHXGk",
+      "events_url": "https://eventsapi.chaturbate.com/events/kiobey/dYwGoA38I4kgSo3N2vGcHXGk/"
+    },
+    {
+      "label": "Mae",
+      "username": "maexbey",
+      "token": "GO7xgrd5stO5ZGe5UbkFo2nH",
+      "events_url": "https://eventsapi.chaturbate.com/events/maexbey/GO7xgrd5stO5ZGe5UbkFo2nH/"
+    },
+    {
+      "label": "Olivia",
+      "username": "oliviabey",
+      "token": "KPmSaJlXYAuUeTM39MoGhLij",
+      "events_url": "https://eventsapi.chaturbate.com/events/oliviabey/KPmSaJlXYAuUeTM39MoGhLij/"
+    },
+    {
+      "label": "Shay",
+      "username": "shaybey",
+      "token": "vVbKSm9yXn7hdyO9wfZgs3pE",
+      "events_url": "https://eventsapi.chaturbate.com/events/shaybey/vVbKSm9yXn7hdyO9wfZgs3pE/"
+    }
+  ]
+}

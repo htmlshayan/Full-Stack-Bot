@@ -1,0 +1,4326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="color-scheme" content="dark">
+  <title>Instagram Model DM Bot - Control Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #000000;
+      --surface: #292929;
+      --surface-soft: #1f1f1f;
+      --surface-border: #3c3c3c;
+      --text: #f5f5f5;
+      --text-muted: #b8b8b8;
+      --primary: #D89B02;
+      --primary-hover: #eab739;
+      --primary-soft: rgba(216, 155, 2, 0.22);
+      --success: #D89B02;
+      --danger: #292929;
+      --warning: #D89B02;
+      --gradient: linear-gradient(135deg, #D89B02 0%, #f0ba2f 55%, #d18d00 100%);
+      --focus-ring: 0 0 0 3px rgba(216, 155, 2, 0.25);
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Manrope', sans-serif; }
+
+    html { background: #000000; }
+    
+    body {
+      background-color: #000000;
+      background:
+        radial-gradient(1100px 500px at -10% -20%, rgba(216,155,2,0.2), transparent 60%),
+        radial-gradient(900px 500px at 120% 110%, rgba(41,41,41,0.55), transparent 60%),
+        linear-gradient(160deg, #000000 0%, #0b0b0b 45%, #141414 100%);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      line-height: 1.45;
+    }
+    
+    /* Sidebar */
+    .sidebar { width: 260px; background: rgba(0, 0, 0, 0.88); padding: 1.75rem 1rem; border-right: 1px solid var(--surface-border); display: flex; flex-direction: column; backdrop-filter: blur(10px); }
+    .sidebar h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.2rem; padding: 0 1rem; background: var(--gradient); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 0.5rem; }
+    .sidebar-title-text { display: inline; white-space: nowrap; }
+    .sidebar-spacer { margin-bottom: 1rem; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 0.25rem; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; }
+    .nav-btn { background: transparent; color: var(--text-muted); border: none; padding: 0.75rem 1rem; border-radius: 10px; text-align: left; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; transition: all 0.2s; margin-bottom: 0.25rem; }
+    .nav-btn .nav-label { display: inline; white-space: nowrap; }
+    .nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-btn.active { background: linear-gradient(135deg, var(--primary), #f0ba2f); color: #111; box-shadow: 0 8px 20px -12px rgba(216, 155, 2, 0.55); }
+    .nav-btn.logout { color: var(--primary); border: 1px solid rgba(216, 155, 2, 0.45); }
+    .nav-btn.logout:hover { background: rgba(216, 155, 2, 0.14); color: #f3c24d; }
+
+    @media (min-width: 861px) {
+      .sidebar {
+        width: 78px;
+        padding: 1.2rem 0.6rem;
+        overflow: hidden;
+        transition: width 0.2s ease, padding 0.2s ease;
+      }
+      .sidebar:hover,
+      .sidebar:focus-within {
+        width: 260px;
+        padding: 1.75rem 1rem;
+      }
+      .sidebar h2 {
+        justify-content: center;
+        padding: 0;
+        margin-bottom: 0.8rem;
+      }
+      .sidebar:hover h2,
+      .sidebar:focus-within h2 {
+        justify-content: flex-start;
+        padding: 0 1rem;
+        margin-bottom: 1.2rem;
+      }
+      .sidebar .sidebar-title-text,
+      .sidebar .nav-btn .nav-label {
+        display: none;
+      }
+      .sidebar:hover .sidebar-title-text,
+      .sidebar:hover .nav-btn .nav-label,
+      .sidebar:focus-within .sidebar-title-text,
+      .sidebar:focus-within .nav-btn .nav-label {
+        display: inline;
+      }
+      .sidebar .sidebar-spacer {
+        display: none;
+      }
+      .sidebar:hover .sidebar-spacer,
+      .sidebar:focus-within .sidebar-spacer {
+        display: block;
+      }
+      .sidebar .nav-btn {
+        justify-content: center;
+        gap: 0;
+        padding: 0.72rem 0.55rem;
+      }
+      .sidebar:hover .nav-btn,
+      .sidebar:focus-within .nav-btn {
+        justify-content: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+      }
+      .sidebar .nav-btn i {
+        min-width: 1.1rem;
+        text-align: center;
+      }
+      .sidebar #currentUserPill {
+        display: none;
+      }
+      .sidebar:hover #currentUserPill,
+      .sidebar:focus-within #currentUserPill {
+        display: block;
+      }
+
+    }
+    
+    /* Main Content */
+    .main { flex: 1; overflow-y: auto; padding: 2rem 2.5rem; position: relative; }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    
+    h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 1.5rem; color: #fff; }
+    
+    /* Cards & Form elements */
+    .card { background: linear-gradient(180deg, rgba(41, 41, 41, 0.95), rgba(18, 18, 18, 0.98)); border: 1px solid var(--surface-border); border-radius: 14px; padding: 1.35rem; margin-bottom: 1.25rem; box-shadow: 0 14px 30px -20px rgba(0, 0, 0, 0.75); }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+    input, textarea, select { width: 100%; background: #101010; border: 1px solid var(--surface-border); border-radius: 8px; padding: 0.72rem 0.78rem; color: var(--text); font-size: 0.95rem; transition: border 0.2s, box-shadow 0.2s, transform 0.2s; }
+    input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
+    textarea { resize: vertical; min-height: 120px; font-family: inherit; }
+    .setting-toggle-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.65rem 0.72rem;
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+    }
+    .setting-toggle-row input[type="checkbox"] {
+      width: auto;
+      margin-top: 0.2rem;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+    .setting-toggle-row .setting-toggle-text {
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .setting-toggle-help {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+    
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border: 1px solid rgba(216, 155, 2, 0.2); border-radius: 9px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; color: #111; }
+    .btn-primary { background: var(--primary); }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn-success { background: var(--success); }
+    .btn-success:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn-danger { background: var(--danger); }
+    .btn-danger { color: var(--primary); border-color: rgba(216, 155, 2, 0.45); }
+    .btn-danger:hover { background: #3a3a3a; color: #f3c24d; transform: translateY(-1px); }
+    .btn-sm { padding: 0.45rem 0.78rem; font-size: 0.8rem; border-radius: 6px; }
+    
+    /* Dashboard specific */
+    .dash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: linear-gradient(180deg, rgba(38, 38, 38, 0.95), rgba(16, 16, 16, 0.95)); border: 1px solid var(--surface-border); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .stat-card h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+    .stat-card .val { font-size: 2rem; font-weight: 600; color: #fff; }
+    
+    .terminal { background: #050505; border: 1px solid #3a3a3a; border-radius: 12px; height: 350px; overflow-y: auto; padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #e2e8f0; }
+    .terminal .line { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .log-success { color: var(--success); }
+    .log-error { color: var(--danger); }
+    .log-warn { color: var(--warning); }
+    .log-info { color: #c5c5c5; }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--surface-border); }
+    th { color: var(--text-muted); font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    tr:last-child td { border-bottom: none; }
+    .owner-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem; }
+    .owner-tab-btn {
+      border: 1px solid var(--surface-border);
+      background: rgba(255,255,255,0.02);
+      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .owner-tab-btn.active {
+      border-color: rgba(216,155,2,0.5);
+      background: rgba(216,155,2,0.16);
+      color: #f3c24d;
+    }
+    #accountsTable td { vertical-align: middle; }
+    #accountsTable td:last-child { white-space: nowrap; }
+    .accounts-actions { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 34px; }
+    .automation-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid rgba(216, 155, 2, 0.42);
+      background: rgba(216, 155, 2, 0.12);
+      color: #f3c24d;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .automation-toggle:hover {
+      background: rgba(216, 155, 2, 0.22);
+      transform: translateY(-1px);
+    }
+    .automation-toggle.is-disabled {
+      border-color: rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.06);
+      color: #bcbcbc;
+    }
+    .suspension-toggle {
+      border-color: rgba(224, 62, 62, 0.45);
+      background: rgba(224, 62, 62, 0.12);
+      color: #ff8f8f;
+    }
+    .suspension-toggle:hover {
+      background: rgba(224, 62, 62, 0.22);
+    }
+    .suspension-toggle.is-suspended {
+      border-color: rgba(224, 62, 62, 0.58);
+      background: rgba(224, 62, 62, 0.2);
+      color: #ffc2c2;
+    }
+    .automation-toggle:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .automation-indicator-readonly {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid rgba(216, 155, 2, 0.24);
+      background: rgba(216, 155, 2, 0.08);
+      color: #f3c24d;
+      opacity: 0.9;
+    }
+    .automation-indicator-readonly.is-disabled {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.06);
+      color: #bcbcbc;
+    }
+    .suspension-indicator-readonly {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid rgba(224, 62, 62, 0.34);
+      background: rgba(224, 62, 62, 0.12);
+      color: #ff8f8f;
+      opacity: 0.92;
+    }
+    .suspension-indicator-readonly.is-suspended {
+      border-color: rgba(224, 62, 62, 0.56);
+      background: rgba(224, 62, 62, 0.2);
+      color: #ffc2c2;
+    }
+    .proxy-input {
+      min-height: 78px;
+      line-height: 1.35;
+      resize: vertical;
+      font-size: 0.82rem;
+    }
+    .proxy-readonly {
+      display: inline-block;
+      max-width: 340px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+    }
+    .password-field-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .password-field-wrap input {
+      min-width: 0;
+      flex: 1;
+    }
+    .password-copy-btn {
+      flex-shrink: 0;
+      padding: 0.45rem 0.58rem;
+    }
+    .password-visibility-btn {
+      flex-shrink: 0;
+      padding: 0.45rem 0.58rem;
+    }
+    .table-search-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.8rem;
+    }
+    .table-search-row input {
+      max-width: 420px;
+    }
+    .table-search-row .btn {
+      flex-shrink: 0;
+    }
+    .table-pagination {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 0.2rem;
+      margin-bottom: 0.7rem;
+      flex-wrap: wrap;
+    }
+    .page-summary {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .page-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .page-indicator {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      min-width: 88px;
+      text-align: center;
+    }
+    .page-btn {
+      border: 1px solid rgba(216, 155, 2, 0.32);
+      background: rgba(216, 155, 2, 0.1);
+      color: #f3c24d;
+      border-radius: 8px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .page-btn:hover {
+      background: rgba(216, 155, 2, 0.2);
+    }
+    .page-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      background: rgba(216, 155, 2, 0.06);
+    }
+    .accounts-label-accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .label-accordion-item {
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    .label-accordion-header {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      padding: 0.9rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.2s;
+    }
+    .label-accordion-header:hover {
+      background: rgba(216, 155, 2, 0.08);
+    }
+    .label-accordion-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .label-title-edit {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 58px;
+      height: 26px;
+      padding: 0 0.45rem;
+      border-radius: 6px;
+      border: 1px solid rgba(216, 155, 2, 0.35);
+      background: rgba(216, 155, 2, 0.1);
+      color: #f3c24d;
+      cursor: pointer;
+      font-size: 0.74rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .label-title-edit:hover {
+      background: rgba(216, 155, 2, 0.2);
+      transform: translateY(-1px);
+    }
+    .label-accordion-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.25px;
+    }
+    .label-accordion-chevron {
+      color: var(--primary);
+      transition: transform 0.2s ease;
+      font-size: 0.86rem;
+    }
+    .label-accordion-item.is-open .label-accordion-chevron {
+      transform: rotate(180deg);
+    }
+    .label-accordion-body {
+      display: none;
+      border-top: 1px solid rgba(216, 155, 2, 0.22);
+      padding: 0.9rem;
+    }
+    .label-accordion-item.is-open .label-accordion-body {
+      display: block;
+    }
+    .label-accordion-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-bottom: 0.75rem;
+    }
+    .label-automation-toggle {
+      width: 34px;
+      height: 34px;
+    }
+    .accounts-group-table {
+      margin-bottom: 0;
+    }
+    .accounts-group-table th:nth-child(4),
+    .accounts-group-table td:nth-child(4) {
+      min-width: 140px;
+    }
+    .accounts-group-table td:last-child {
+      white-space: nowrap;
+    }
+    .label-accordion-empty {
+      border: 1px dashed rgba(216, 155, 2, 0.4);
+      border-radius: 10px;
+      padding: 0.9rem;
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      background: rgba(216, 155, 2, 0.06);
+    }
+
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.65); }
+    ::-webkit-scrollbar-thumb { background: #444444; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #5e5e5e; }
+    
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; right: 20px; background: var(--success); color: #111; padding: 1rem 2rem; border-radius: 8px; font-weight: 600; box-shadow: 0 8px 20px rgba(216,155,2,0.2); transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    
+    /* Badges */
+    .badge { padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .badge-running { background: rgba(216, 155, 2, 0.22); color: #f3c24d; border: 1px solid rgba(216, 155, 2, 0.45); }
+    .badge-stopped, .badge-idle { background: rgba(41, 41, 41, 0.9); color: #d4d4d4; border: 1px solid rgba(216, 155, 2, 0.32); }
+    .badge-cooldown { background: rgba(216, 155, 2, 0.12); color: #eab739; border: 1px solid rgba(216, 155, 2, 0.35); }
+    .badge-stopping { background: rgba(216, 155, 2, 0.16); color: #f3c24d; border: 1px solid rgba(216, 155, 2, 0.45); }
+    .btn.is-loading { opacity: 0.85; pointer-events: none; }
+
+    /* Modal Overlay */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal { background: var(--bg); border: 1px solid var(--surface-border); border-radius: 12px; width: 600px; max-width: 90%; padding: 2rem; transform: translateY(20px); transition: transform 0.2s; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+    .modal-overlay.show .modal { transform: translateY(0); }
+    .modal h2 { margin-bottom: 1rem; color: #fff; }
+    .modal p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+
+    .two-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 0.75rem; }
+
+    @media (max-width: 1100px) {
+      .main { padding: 1.35rem; }
+      .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      h1 { font-size: 1.55rem; }
+      th, td { padding: 0.85rem 0.65rem; }
+
+    }
+
+    @media (max-width: 860px) {
+      body { flex-direction: column; height: auto; min-height: 100vh; overflow: auto; }
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--surface-border);
+        padding: 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      .sidebar h2 { padding: 0; margin-bottom: 0.7rem; font-size: 1.02rem; }
+      .sidebar-spacer { display: none; }
+      .sidebar-nav {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
+        gap: 0.45rem;
+      }
+      .sidebar-footer { margin-top: 0.5rem; padding-top: 0; }
+      .sidebar-footer .nav-btn { width: 100%; justify-content: center; }
+      .sidebar-nav .nav-btn {
+        justify-content: center;
+        margin-bottom: 0;
+        padding: 0.62rem 0.3rem;
+        min-height: 42px;
+        font-size: 0;
+        gap: 0;
+      }
+      .sidebar-nav .nav-btn i {
+        font-size: 1rem;
+        margin: 0;
+      }
+      #currentUserPill { display: none; }
+      .main { padding: 1rem; overflow: visible; }
+      .dash-grid { grid-template-columns: 1fr; }
+      .two-col-grid { grid-template-columns: 1fr; }
+      .section-head { flex-direction: column; align-items: flex-start; margin-bottom: 1rem; }
+      .section-head .btn { width: 100%; justify-content: center; }
+      .table-search-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .table-search-row input { max-width: none; }
+      .table-search-row .btn { width: 100%; justify-content: center; }
+      .terminal { height: 260px; }
+      .badge { font-size: 0.7rem; }
+      .toast { left: 12px; right: 12px; bottom: 12px; padding: 0.85rem 1rem; }
+      .modal { padding: 1.15rem; }
+
+    }
+
+    @media (max-width: 520px) {
+      h1 { font-size: 1.3rem; margin-bottom: 0.9rem; }
+      .btn { width: 100%; justify-content: center; }
+      .btn-sm { width: auto; }
+      th, td { font-size: 0.8rem; }
+      .card { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2><i class="fab fa-instagram"></i><span class="sidebar-title-text">BEY IG DM BOT</span></h2>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-nav">
+      {% if current_user and current_user.role == 'master' %}
+      <button id="navDashboard" class="nav-btn active" onclick="switchTab('dashboard', this)"><i class="fas fa-chart-line"></i><span class="nav-label">Dashboard</span></button>
+      <button id="navAllActivity" class="nav-btn" onclick="switchTab('all-activity', this)"><i class="fas fa-database"></i><span class="nav-label">All Activity</span></button>
+      {% endif %}
+      <button id="navAccounts" class="nav-btn {% if not current_user or current_user.role != 'master' %}active{% endif %}" onclick="openAccountsSidebar(this)"><i class="fas fa-users-cog"></i><span class="nav-label">IG Accounts</span></button>
+      <button id="navSuspended" class="nav-btn" onclick="openSuspendedAccountsSidebar(this)"><i class="fas fa-user-slash"></i><span class="nav-label">Suspended</span></button>
+
+      <button id="navTargets" class="nav-btn" onclick="switchTab('targets', this)"><i class="fas fa-crosshairs"></i><span class="nav-label">Targets & Msgs</span></button>
+      <button id="navSettings" class="nav-btn" onclick="switchTab('settings', this)"><i class="fas fa-sliders-h"></i><span class="nav-label">Settings</span></button>
+    </div>
+    <div class="sidebar-footer">
+      <div id="currentUserPill" style="margin-bottom:0.6rem; padding:0.55rem 0.7rem; border:1px solid var(--surface-border); border-radius:8px; color:var(--text-muted); font-size:0.78rem; text-align:center;">USER: -</div>
+      <button class="nav-btn logout" onclick="window.location.href='/logout'"><i class="fas fa-right-from-bracket"></i><span class="nav-label">Logout</span></button>
+    </div>
+  </div>
+
+  <!-- Main View -->
+  <div class="main">
+    
+    <!-- DASHBOARD -->
+    {% if current_user and current_user.role == 'master' %}
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="section-head">
+        <h1>Overview</h1>
+        <div id="statusBadge" class="badge badge-idle">STATUS: IDLE</div>
+      </div>
+      
+      <div class="dash-grid">
+        <div class="stat-card">
+          <h3>Total Lifetime DMs</h3>
+          <div class="val" id="lifetimeDms">--</div>
+        </div>
+        <div class="stat-card">
+          <h3>DMs Sent Today</h3>
+          <div class="val" id="todayDms">--</div>
+        </div>
+        <div class="stat-card">
+          <h3>Last DM Sent Time</h3>
+          <div class="val" id="lastDmSentAt" style="font-size: 1.1rem; line-height: 1.4;">--</div>
+        </div>
+        <div class="stat-card">
+          <h3>Total Likes</h3>
+          <div class="val" id="totalLikes">--</div>
+        </div>
+        <div class="stat-card">
+          <h3>Likes Today</h3>
+          <div class="val" id="todayLikes">--</div>
+        </div>
+        <div class="stat-card">
+          <h3>Last Like Time</h3>
+          <div class="val" id="lastLikeAt" style="font-size: 1.1rem; line-height: 1.4;">--</div>
+        </div>
+        <div class="stat-card">
+          <h3>Total Story Likes</h3>
+          <div class="val" id="totalStoryLikes">--</div>
+        </div>
+        <div class="stat-card">
+          <h3>Story Likes Today</h3>
+          <div class="val" id="todayStoryLikes">--</div>
+        </div>
+        <div class="stat-card">
+          <h3>Last Story Like Time</h3>
+          <div class="val" id="lastStoryLikeAt" style="font-size: 1.1rem; line-height: 1.4;">--</div>
+        </div>
+
+      </div>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+        <!-- DM BOT CARD -->
+        <div class="card" style="margin: 0; padding: 1.25rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+            <h3 style="margin:0; font-size: 1rem; font-weight: 600; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fas fa-paper-plane" style="color: #4CAF50;"></i> DM Bot Engine
+            </h3>
+            <span id="dmStatusBadge" class="badge badge-idle" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; border-radius: 4px;">IDLE</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button id="btnStartDM" class="btn btn-success" onclick="botCommand('start')" style="width: 100%; justify-content:center; padding: 0.8rem;">
+              <i class="fas fa-play"></i> START DM BOT
+            </button>
+            <button id="btnStopDM" class="btn btn-danger" onclick="botCommand('stop?mode=dm')" style="width: 100%; justify-content:center; display:none; padding: 0.8rem;">
+              <i class="fas fa-stop"></i> STOP DM BOT
+            </button>
+          </div>
+        </div>
+
+
+        <!-- LIKER BOT CARD -->
+        <div class="card" style="margin: 0; padding: 1.25rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+            <h3 style="margin:0; font-size: 1rem; font-weight: 600; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fas fa-heart" style="color: #E91E63;"></i> Comment Liker Engine
+            </h3>
+            <span id="likerStatusBadge" class="badge badge-idle" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; border-radius: 4px;">IDLE</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button id="btnStartLiker" class="btn btn-primary" onclick="botCommand('start/liker')" style="width: 100%; justify-content:center; padding: 0.8rem; background: #E91E63; border-color: #E91E63; color: white;">
+              <i class="fas fa-play"></i> START LIKER BOT
+            </button>
+            <button id="btnStopLiker" class="btn btn-danger" onclick="botCommand('stop/liker')" style="width: 100%; justify-content:center; display:none; padding: 0.8rem;">
+              <i class="fas fa-stop"></i> STOP LIKER BOT
+            </button>
+          </div>
+        </div>
+
+
+        <!-- STORY LIKER BOT CARD -->
+        <div class="card" style="margin: 0; padding: 1.25rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+            <h3 style="margin:0; font-size: 1rem; font-weight: 600; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fas fa-film" style="color: #3B82F6;"></i> Story Liker Engine
+            </h3>
+            <span id="storyStatusBadge" class="badge badge-idle" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; border-radius: 4px;">IDLE</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button id="btnStartStory" class="btn btn-primary" onclick="botCommand('start/story')" style="width: 100%; justify-content:center; padding: 0.8rem; background: #3B82F6; border-color: #3B82F6; color: white;">
+              <i class="fas fa-play"></i> START STORY LIKER
+            </button>
+            <button id="btnStopStory" class="btn btn-danger" onclick="botCommand('stop/story')" style="width: 100%; justify-content:center; display:none; padding: 0.8rem;">
+              <i class="fas fa-stop"></i> STOP STORY LIKER
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="card" style="padding: 0;">
+        <div style="padding: 1rem; border-bottom: 1px solid var(--surface-border); display:flex; justify-content:space-between; align-items:center;">
+          <h3 style="font-size:0.95rem; font-weight:600;"><i class="fas fa-terminal"></i> Live Terminal</h3>
+        </div>
+        <div class="terminal" id="terminalBox">
+          <div class="line">Loading logs...</div>
+        </div>
+      </div>
+
+      <div id="employeeActivityCard" class="card" style="display:none;">
+        <div class="section-head" style="margin-bottom: 0.75rem;">
+          <h3 style="font-size:0.95rem; font-weight:600; margin:0;"><i class="fas fa-history"></i> Employee Activity</h3>
+          <button class="btn btn-primary btn-sm" onclick="loadEmployeeActivity()"><i class="fas fa-rotate"></i> Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table id="employeeActivityTable" style="margin-bottom:0;">
+            <thead>
+              <tr>
+                <th style="width: 190px;">Time</th>
+                <th style="width: 140px;">Employee</th>
+                <th style="width: 170px;">Action</th>
+                <th style="width: 170px;">Target</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="5" style="color: var(--text-muted); font-size:0.85rem;">No employee activity yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="employeeActivityPagination" class="table-pagination"></div>
+      </div>
+
+    </div>
+    {% endif %}
+
+    {% if current_user and current_user.role == 'master' %}
+    <div id="tab-all-activity" class="tab-content">
+      <div class="section-head" style="margin-bottom: 0.75rem;">
+        <h1><i class="fas fa-database"></i> All Activity (Last 24 Hours)</h1>
+        <button class="btn btn-primary btn-sm" onclick="loadAllActivity()"><i class="fas fa-rotate"></i> Refresh</button>
+      </div>
+
+      <div id="allActivityCard" class="card">
+        <div class="table-wrap" style="margin-bottom: 0.75rem;">
+          <table id="allActivityByDayTable" style="margin-bottom:0;">
+            <thead>
+              <tr>
+                <th style="width: 180px;">Day</th>
+                <th style="width: 120px;">Events</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="2" style="color: var(--text-muted); font-size:0.85rem;">No 24-hour activity summary yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-wrap">
+          <table id="allActivityTable" style="margin-bottom:0;">
+            <thead>
+              <tr>
+                <th style="width: 190px;">Time</th>
+                <th style="width: 130px;">Day</th>
+                <th style="width: 140px;">User</th>
+                <th style="width: 110px;">Role</th>
+                <th style="width: 170px;">Action</th>
+                <th style="width: 170px;">Target</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="7" style="color: var(--text-muted); font-size:0.85rem;">No activity in the last 24 hours.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="allActivityPagination" class="table-pagination"></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ACCOUNTS -->
+    <div id="tab-accounts" class="tab-content {% if not current_user or current_user.role != 'master' %}active{% endif %}">
+      <div class="section-head">
+        <h1>Instagram Accounts</h1>
+        <button class="btn btn-primary btn-sm" onclick="openAddLabelModal()"><i class="fas fa-plus"></i> Add Label</button>
+      </div>
+
+      <div id="accountsOwnerTabs" class="owner-tabs"></div>
+      
+      <div class="card">
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          Optional model label: this is your marketing model/campaign label (for example, Alice). It does not limit target usernames. If account custom messages are empty, this account uses the generic target message flow (target-specific messages, then general messages).
+          <br><span style="color:var(--primary);">👁 Automation</span> — click eye icon per account to enable/disable bot automation for that account.
+          <br><span style="color:#ff8f8f;">🚫 Suspended</span> — click suspend icon to move account to Suspended Accounts and keep bot from using it.
+          <br><span style="color:var(--primary);">🌐 Proxy</span> — optional, per-account. Add up to 5 proxies separated by comma (failover order left to right). Formats: <code style="font-size:0.78rem; background:#1a1a1a; padding:1px 4px; border-radius:3px;">host:port</code>, <code style="font-size:0.78rem; background:#1a1a1a; padding:1px 4px; border-radius:3px;">user:pass@host:port</code>, <code style="font-size:0.78rem; background:#1a1a1a; padding:1px 4px; border-radius:3px;">socks5://host:port</code>.
+        </p>
+        <div class="table-search-row">
+          <input
+            type="text"
+            id="accountsSearchInput"
+            placeholder="Search accounts by username"
+            oninput="setAccountsSearch(this.value)"
+          >
+          <button type="button" class="btn btn-primary btn-sm" onclick="clearAccountsSearch()">
+            <i class="fas fa-xmark"></i> Clear
+          </button>
+        </div>
+        <div id="accountsLabelAccordion" class="accounts-label-accordion"></div>
+        <div id="accountsFlatTableWrap" class="table-wrap" style="display:none;">
+          <table id="accountsTable">
+            <thead>
+              <tr>
+                <th style="width: 84px;">Auto</th>
+                <th style="width: 84px;">Susp</th>
+                <th>Username</th>
+                <th>Password (Required)</th>
+                <th id="accountsOwnerHeader" style="width: 140px; display:none;">Owner</th>
+                <th style="width: 320px;">Proxy (Optional)</th>
+                <th style="width: 170px;">Bio + URL (Required)</th>
+                <th style="width: 170px;">Custom Messages</th>
+                <th style="width: 140px;">Cookies</th>
+                <th style="width: 100px;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="accountsPagination" class="table-pagination"></div>
+        <div style="display:flex; justify-content:flex-end; margin-top: 1rem;">
+          <button class="btn btn-success" onclick="saveAccounts()"><i class="fas fa-save"></i> Save Accounts</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TARGETS -->
+    <div id="tab-targets" class="tab-content">
+      <h1>Targets & Messages</h1>
+
+      <div class="card">
+        <div class="section-head" style="margin-bottom: 1rem;">
+          <div>
+            <h3 style="margin-bottom: 0.4rem;"><i class="fas fa-user-pen"></i> Model-Specific Targets & Messages</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Add each target model with custom messages. This section is now the main source for target models and DM templates.</p>
+          </div>
+          <button id="btnAddModelSet" class="btn btn-primary btn-sm" onclick="addModelMessageRow()"><i class="fas fa-plus"></i> Add Model Set</button>
+        </div>
+
+        <datalist id="modelsDatalist"></datalist>
+
+        <div class="table-search-row">
+          <input
+            type="text"
+            id="modelMessagesSearchInput"
+            placeholder="Search targets by model username"
+            oninput="setModelMessagesSearch(this.value)"
+          >
+          <button type="button" class="btn btn-primary btn-sm" onclick="clearModelMessagesSearch()">
+            <i class="fas fa-xmark"></i> Clear
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table id="modelMessagesTable">
+            <thead>
+              <tr>
+                <th style="width: 220px;">Model Username</th>
+                <th>Custom Messages (One Per Line)</th>
+                <th id="modelMessageMetaHeader" style="width: 220px; display:none;">Updated By</th>
+                <th style="width: 90px;">Automation</th>
+                <th style="width: 100px;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="modelMessagesPagination" class="table-pagination"></div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top: 1rem;">
+          <button id="btnSaveModelMessages" class="btn btn-success" onclick="saveModelMessages()"><i class="fas fa-save"></i> Save Targets & Messages</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="tab-settings" class="tab-content">
+      <div class="section-head">
+        <h1>Bot Settings</h1>
+        <button class="btn btn-success" onclick="saveSettings()"><i class="fas fa-save"></i> Apply Settings</button>
+      </div>
+      
+      <div class="two-col-grid">
+        <!-- Dashboard Users (Master only) -->
+        <div class="card" id="userManagementCard" style="display:none;">
+          <h3 style="margin-bottom: 1rem; color:var(--primary);"><i class="fas fa-user-shield"></i> Employee Logins (Master)</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Create separate employee dashboards so each person only edits their own Instagram accounts.</p>
+
+          <div class="table-wrap" style="margin-bottom: 1rem;">
+            <table id="usersTable">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th style="width: 280px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="form-group">
+            <label>New Employee Username</label>
+            <input type="text" id="newEmployeeUsername" placeholder="employee_name">
+          </div>
+          <div class="form-group">
+            <label>New Employee Password</label>
+            <input type="password" id="newEmployeePassword" placeholder="Minimum 4 characters">
+          </div>
+          <button class="btn btn-success" style="width: 100%; justify-content:center" onclick="createEmployeeUser()"><i class="fas fa-user-plus"></i> Create Employee Login</button>
+        </div>
+
+        <!-- Telegram -->
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem; color:var(--primary);"><i class="fab fa-telegram"></i> Telegram Integration</h3>
+          <div class="form-group">
+            <label>Bot Token (from BotFather)</label>
+            <input type="text" id="set_TELEGRAM_BOT_TOKEN" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11">
+          </div>
+          <div class="form-group">
+            <label>Chat IDs (Comma separated for multiple)</label>
+            <input type="text" id="set_TELEGRAM_CHAT_IDS" placeholder="8592007309, 123456789">
+          </div>
+          <div style="height:1px; background: var(--surface-border); margin: 1rem 0;"></div>
+          <div class="form-group">
+            <label>Locked Account Alert Bot Token (Optional)</label>
+            <input type="text" id="set_LOCK_ALERT_BOT_TOKEN" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
+              If set, lock alerts will be sent by this dedicated bot.
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Locked Alert Chat IDs (Optional, Comma separated)</label>
+            <input type="text" id="set_LOCK_ALERT_CHAT_IDS" placeholder="8592007309, 123456789">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
+              Leave empty to reuse normal Telegram chat IDs.
+            </div>
+          </div>
+        </div>
+        
+        <!-- Quotas -->
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem; color:var(--primary);"><i class="fas fa-chart-bar"></i> DM Limits per Model</h3>
+          <div style="display: flex; gap: 1rem;">
+            <div class="form-group" style="flex:1">
+              <label>Minimum DMs</label>
+              <input type="number" id="set_DM_MIN_PER_MODEL" placeholder="5">
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Maximum DMs</label>
+              <input type="number" id="set_DM_MAX_PER_MODEL" placeholder="10">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Post Age Priority (Hours)</label>
+            <input type="number" id="set_POST_AGE_PRIORITY_HOURS" placeholder="24">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">Bot will ONLY scrape comments from posts newer than this.</div>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="setting-toggle-row" for="set_GLOBAL_TARGET_DEDUP_ENABLED">
+              <input type="checkbox" id="set_GLOBAL_TARGET_DEDUP_ENABLED">
+              <span class="setting-toggle-text">Enable global target dedupe across all VPS</span>
+            </label>
+            <div class="setting-toggle-help">
+              ON = avoid sending the same target across VPS (shared 24h dedupe). OFF = each VPS/account pursues its own DM quota.
+            </div>
+          </div>
+          <div style="height:1px; background: var(--surface-border); margin: 1.5rem 0;"></div>
+          <h3 style="margin-bottom: 1.5rem; color:var(--primary);"><i class="fas fa-heart"></i> Liker Limits</h3>
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label class="setting-toggle-row" for="likerAllToggle">
+              <input type="checkbox" id="likerAllToggle">
+              <span class="setting-toggle-text">Like all posts/reels and all comments</span>
+            </label>
+            <div class="setting-toggle-help">
+              ON = ignore limits and like every comment on every post/reel. OFF = use custom limits below.
+            </div>
+          </div>
+          <div style="display: flex; gap: 1rem;">
+            <div class="form-group" style="flex:1">
+              <label>Posts to Check</label>
+              <input type="number" id="set_LIKE_POSTS_COUNT" placeholder="5" min="0">
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Likes per Post</label>
+              <input type="number" id="set_LIKE_PER_POST_COUNT" placeholder="10" min="0">
+            </div>
+          </div>
+          <div style="height:1px; background: var(--surface-border); margin: 1.5rem 0;"></div>
+          <h3 style="margin-bottom: 1.5rem; color:var(--primary);"><i class="fas fa-film"></i> Story Liker Limits</h3>
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label class="setting-toggle-row" for="set_STORY_LIKE_INCLUDE_HIGHLIGHTS">
+              <input type="checkbox" id="set_STORY_LIKE_INCLUDE_HIGHLIGHTS">
+              <span class="setting-toggle-text">Include story highlights</span>
+            </label>
+            <div class="setting-toggle-help">
+              ON = like highlight stories after the main story run. OFF = main stories only.
+            </div>
+          </div>
+          <div style="display: flex; gap: 1rem;">
+            <div class="form-group" style="flex:1">
+              <label>Max Stories per Profile</label>
+              <input type="number" id="set_STORY_LIKE_MAX_PER_PROFILE" placeholder="50" min="0">
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Max Highlights per Profile</label>
+              <input type="number" id="set_STORY_LIKE_MAX_HIGHLIGHTS" placeholder="5" min="0">
+            </div>
+          </div>
+        </div>
+        
+        <!-- Delays -->
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem; color:var(--primary);"><i class="fas fa-clock"></i> Anti-Spam Delays (Seconds)</h3>
+          <div style="display: flex; gap: 1rem;">
+            <div class="form-group" style="flex:1">
+              <label>Message Delay MIN</label>
+              <input type="number" id="set_DM_DELAY_MIN" placeholder="3">
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Message Delay MAX</label>
+              <input type="number" id="set_DM_DELAY_MAX" placeholder="7">
+            </div>
+          </div>
+          <div style="display: flex; gap: 1rem;">
+            <div class="form-group" style="flex:1">
+              <label>Action Delay MIN (Clicks)</label>
+              <input type="number" id="set_ACTION_DELAY_MIN">
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Action Delay MAX</label>
+              <input type="number" id="set_ACTION_DELAY_MAX">
+            </div>
+          </div>
+        </div>
+
+        <!-- DM Safety & Personalization -->
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem; color:var(--primary);"><i class="fas fa-shield-alt"></i> DM Safety & Personalization</h3>
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label class="setting-toggle-row" for="set_DM_BATCH_PAUSE_ENABLED">
+              <input type="checkbox" id="set_DM_BATCH_PAUSE_ENABLED">
+              <span class="setting-toggle-text">Enable safety batch pause (10 DMs then 5 minutes)</span>
+            </label>
+            <div class="setting-toggle-help">
+              ON = each account pauses for 5 minutes after every 10 successful DMs, then continues the next batch.
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label class="setting-toggle-row" for="set_DM_RANDOM_EMOJI_SUFFIX_ENABLED">
+              <input type="checkbox" id="set_DM_RANDOM_EMOJI_SUFFIX_ENABLED">
+              <span class="setting-toggle-text">Enable random emoji suffix for each DM</span>
+            </label>
+            <div class="setting-toggle-help">
+              ON = append one random emoji at the end of each outgoing DM.
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Emoji Pool (Comma separated)</label>
+            <input type="text" id="set_DM_RANDOM_EMOJI_SUFFIX_POOL" placeholder="🙂, 😊, 😉, ✨, 🌸, 🙏">
+          </div>
+        </div>
+        
+
+
+        <!-- Continuous Runtime Policy -->
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem; color:var(--primary);"><i class="fas fa-infinity"></i> Continuous Runtime</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Bot now runs continuously 24/7 after Start and only stops when you press Stop.
+          </p>
+          <div style="font-size:0.8rem; color:var(--text-muted); padding:0.7rem 0.8rem; border:1px solid var(--surface-border); border-radius:10px; background: rgba(255,255,255,0.02);">
+            Session cooldown settings are disabled in this mode.
+          </div>
+        </div>
+        
+      </div>
+    </div>
+
+
+    
+  </div>
+
+  <div class="toast" id="toast">Changes Saved Successfully!</div>
+
+  <!-- Cookie Editor Modal -->
+  <div class="modal-overlay" id="cookieModalOverlay">
+    <div class="modal">
+      <h2 id="cookieModalTitle">Edit Cookies</h2>
+      <p>Paste the raw exported JSON cookies (e.g. from EditThisCookie) below. If you supply valid cookies here, the password field is optional!</p>
+      <textarea id="cookieJsonTextarea" rows="10" placeholder='[{"domain": ".instagram.com", "name": "sessionid", "value": "..."}]...' style="font-family: monospace; font-size: 0.8rem; margin-bottom: 1rem;"></textarea>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn" style="background:var(--surface-border)" onclick="closeCookieModal()">Cancel</button>
+        <button class="btn btn-success" onclick="saveCookieModal()"><i class="fas fa-save"></i> Save Cookies</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Message Editor Modal -->
+  <div class="modal-overlay" id="accountMessageModalOverlay">
+    <div class="modal">
+      <h2 id="accountMessageModalTitle">Account Custom Messages</h2>
+      <p>Add one message per line. These override the label/general message pools for this account.</p>
+      <textarea id="accountMessageTextarea" rows="10" placeholder="Hi {name}\nHello from our page" style="font-family: inherit; margin-bottom: 1rem;"></textarea>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn" style="background:var(--surface-border)" onclick="closeAccountMessageModal()">Cancel</button>
+        <button class="btn btn-success" onclick="saveAccountMessageModal()"><i class="fas fa-save"></i> Save Messages</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Bio + URL Preset Modal -->
+  <div class="modal-overlay" id="accountProfileModalOverlay">
+    <div class="modal">
+      <h2 id="accountProfileModalTitle">Account Bio + URL Preset</h2>
+      <p>Type the bio and URL details for this IG account. This field is required and will be shared to Telegram for easier visibility.</p>
+      <textarea id="accountProfileTextarea" rows="10" placeholder="Bio: Premium fashion and lifestyle\nURL: https://instagram.com/your_account" style="font-family: inherit; margin-bottom: 1rem;"></textarea>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn" style="background:var(--surface-border)" onclick="closeAccountProfileModal()">Cancel</button>
+        <button class="btn btn-success" onclick="saveAccountProfileModal()"><i class="fas fa-save"></i> Save Preset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Label Modal -->
+  <div class="modal-overlay" id="accountsLabelModalOverlay">
+    <div class="modal" style="max-width: 520px;">
+      <h2>Add Model Label</h2>
+      <p>Create a label accordion first, then add IG accounts inside that label.</p>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label>Model Label</label>
+        <input
+          type="text"
+          id="accountsLabelInput"
+          placeholder="e.g. Sylvia"
+          onkeydown="handleAccountsLabelInputKeydown(event)"
+        >
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn" style="background:var(--surface-border); color: var(--text);" onclick="closeAddLabelModal()">Cancel</button>
+        <button class="btn btn-success" onclick="saveAddLabelModal()"><i class="fas fa-save"></i> Add Label</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rename Account Label Modal -->
+  <div class="modal-overlay" id="accountsRenameLabelModalOverlay">
+    <div class="modal" style="max-width: 520px;">
+      <h2>Rename Model Label</h2>
+      <p>Update this label name. All accounts in this label will be moved to the new name.</p>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label>Label Name</label>
+        <input
+          type="text"
+          id="accountsRenameLabelInput"
+          placeholder="e.g. Sylvia"
+          onkeydown="handleRenameLabelInputKeydown(event)"
+        >
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn" style="background:var(--surface-border); color: var(--text);" onclick="closeRenameLabelModal()">Cancel</button>
+        <button class="btn btn-success" onclick="saveRenameLabelModal()"><i class="fas fa-save"></i> Rename Label</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Edit Modal -->
+  <div class="modal-overlay" id="userEditModalOverlay">
+    <div class="modal">
+      <h2 id="userEditModalTitle">Edit Dashboard User</h2>
+      <p>Change username and password. Leave password fields empty to keep current password.</p>
+
+      <div class="form-group">
+        <label>Current Username</label>
+        <input type="text" id="userEditCurrentUsername" disabled>
+      </div>
+
+      <div class="form-group">
+        <label>New Username</label>
+        <input type="text" id="userEditNewUsername" placeholder="new_username">
+      </div>
+
+      <div class="form-group">
+        <label>New Password (Optional)</label>
+        <input type="password" id="userEditNewPassword" placeholder="Minimum 4 characters">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label>Confirm New Password</label>
+        <input type="password" id="userEditConfirmPassword" placeholder="Re-enter new password">
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn" style="background:var(--surface-border); color: var(--text);" onclick="closeUserEditModal()">Cancel</button>
+        <button class="btn btn-success" onclick="saveUserEditModal()"><i class="fas fa-save"></i> Save User</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Popup -->
+  <div class="modal-overlay" id="messageModalOverlay">
+    <div class="modal" style="max-width: 520px;">
+      <h2 id="messageModalTitle">Notice</h2>
+      <p id="messageModalText">Message</p>
+      <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+        <button class="btn btn-primary" onclick="closeMessageModal()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Popup -->
+  <div class="modal-overlay" id="confirmModalOverlay">
+    <div class="modal" style="max-width: 520px;">
+      <h2 id="confirmModalTitle">Confirm</h2>
+      <p id="confirmModalText">Are you sure?</p>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+        <button class="btn" style="background:var(--surface-border); color: var(--text);" onclick="resolveConfirmModal(false)">Cancel</button>
+        <button id="confirmModalConfirmBtn" class="btn btn-danger" onclick="resolveConfirmModal(true)">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Password Popup -->
+  <div class="modal-overlay" id="resetPasswordModalOverlay">
+    <div class="modal" style="max-width: 540px;">
+      <h2 id="resetPasswordModalTitle">Reset Password</h2>
+      <p>Set a new password for this user.</p>
+
+      <div class="form-group">
+        <label>New Password</label>
+        <input type="password" id="resetPasswordInput" placeholder="Minimum 4 characters">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label>Confirm Password</label>
+        <input type="password" id="resetPasswordConfirmInput" placeholder="Re-enter password">
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn" style="background:var(--surface-border); color: var(--text);" onclick="closeResetPasswordModal()">Cancel</button>
+        <button class="btn btn-success" onclick="saveResetPasswordModal()"><i class="fas fa-save"></i> Update Password</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MAX_PROXIES_PER_ACCOUNT = 5;
+    const ACCOUNTS_PAGE_SIZE = 10;
+    const MODEL_MESSAGES_PAGE_SIZE = 10;
+    const ACTIVITY_PAGE_SIZE = 10;
+    const SUSPENDED_ACCOUNTS_GROUP_KEY = '__suspended__';
+
+    let globalAccounts = [];
+    let globalModels = [];
+    let globalMessages = [];
+    let globalModelMessages = [];
+    let globalModelMessageMeta = {};
+    let globalSettings = {};
+    let globalUsers = [];
+    let globalCurrentUser = {username: '', role: 'employee'};
+    let globalIsMaster = false;
+    let globalEmployeeActivity = [];
+    let globalAllActivity = [];
+    let globalAllActivityByDay = [];
+    let globalQueueAccounts = [];
+    let globalAccountLabelDrafts = [];
+    let globalAccountOwnerTabs = [];
+    let activeAccountOwnerTab = 'all';
+    let activeEditUser = '';
+    let activeCookieUser = "";
+    let activeCookieRowIndex = -1;
+    let activeAccountMessageRowIndex = -1;
+    let activeAccountMessageUser = '';
+    let activeAccountProfileRowIndex = -1;
+    let activeAccountProfileUser = '';
+    let activeResetPasswordUser = '';
+    let confirmModalResolver = null;
+    let pendingBotCommand = '';
+    let lastKnownDmState = { status: 'idle' };
+    let lastKnownLikerState = { status: 'idle' };
+    let lastKnownStoryState = { status: 'idle' };
+    let accountsPage = 1;
+    let modelMessagesPage = 1;
+    let employeeActivityPage = 1;
+    let allActivityPage = 1;
+    let accountsSearchQuery = '';
+    let modelMessagesSearchQuery = '';
+    let activeAccountsLabelAccordion = { generic: true };
+    let activeRenameLabelKey = '';
+    let activeRenameLabelScope = 'all';
+    let activeAccountsSidebarSection = 'all';
+    let likerCustomPosts = null;
+    let likerCustomLikes = null;
+    let likerToggleInitialized = false;
+
+
+
+    // ── UI Navigation ──
+    function switchTab(tabId, buttonEl) {
+      if (!globalIsMaster && (tabId === 'dashboard' || tabId === 'all-activity')) {
+        tabId = 'accounts';
+        buttonEl = document.getElementById('navAccounts');
+      }
+
+      const targetTab = document.getElementById('tab-' + tabId);
+      if (!targetTab) {
+        return;
+      }
+
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      targetTab.classList.add('active');
+      if (buttonEl) {
+        buttonEl.classList.add('active');
+      }
+    }
+
+    function openAccountsSidebar(buttonEl) {
+      syncAccountsFromDom();
+      activeAccountsSidebarSection = 'all';
+      switchTab('accounts', buttonEl || document.getElementById('navAccounts'));
+      renderAccounts();
+    }
+
+    function openSuspendedAccountsSidebar(buttonEl) {
+      syncAccountsFromDom();
+      activeAccountsSidebarSection = 'suspended';
+      setAccountLabelExpanded(SUSPENDED_ACCOUNTS_GROUP_KEY, true);
+      switchTab('accounts', buttonEl || document.getElementById('navSuspended'));
+      renderAccounts();
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function showMessageModal(message, title = 'Notice') {
+      const titleEl = document.getElementById('messageModalTitle');
+      const textEl = document.getElementById('messageModalText');
+      if (titleEl) titleEl.innerText = title;
+      if (textEl) textEl.innerText = message || 'Request failed';
+      document.getElementById('messageModalOverlay').classList.add('show');
+    }
+
+    function closeMessageModal() {
+      document.getElementById('messageModalOverlay').classList.remove('show');
+    }
+
+    function showError(msg) {
+      showMessageModal(msg || 'Request failed', 'Error');
+    }
+
+    async function copyTextToClipboard(rawText) {
+      const text = String(rawText || '');
+      if (!text) {
+        return false;
+      }
+
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (e) {}
+      }
+
+      const temp = document.createElement('textarea');
+      temp.value = text;
+      temp.setAttribute('readonly', '');
+      temp.style.position = 'fixed';
+      temp.style.opacity = '0';
+      temp.style.pointerEvents = 'none';
+      document.body.appendChild(temp);
+      temp.focus();
+      temp.select();
+
+      let copied = false;
+      try {
+        copied = document.execCommand('copy');
+      } catch (e) {
+        copied = false;
+      }
+
+      document.body.removeChild(temp);
+      return copied;
+    }
+
+    async function copyAccountPassword(rowIndex) {
+      const idx = Number(rowIndex);
+      if (!Number.isInteger(idx) || idx < 0) {
+        showError('Unable to copy password from this row.');
+        return;
+      }
+
+      const inputEl = document.getElementById(`acc_pass_${idx}`);
+      const inputVal = inputEl ? String(inputEl.value || '') : '';
+      const fallbackVal = globalAccounts[idx] ? String(globalAccounts[idx].password || '') : '';
+      const passValue = inputVal || fallbackVal;
+
+      if (!passValue) {
+        showError('Password is empty. Nothing to copy.');
+        return;
+      }
+
+      const copied = await copyTextToClipboard(passValue);
+      if (!copied) {
+        showError('Clipboard access was blocked. Please copy the password manually.');
+        return;
+      }
+
+      const displayUser = String((globalAccounts[idx] && globalAccounts[idx].username) || '').trim() || `row ${idx + 1}`;
+      showToast(`Password copied for ${displayUser}.`);
+    }
+
+    function toggleAccountPasswordVisibility(rowIndex) {
+      const idx = Number(rowIndex);
+      if (!Number.isInteger(idx) || idx < 0) {
+        return;
+      }
+
+      const passInput = document.getElementById(`acc_pass_${idx}`);
+      const toggleBtn = document.getElementById(`acc_pass_toggle_${idx}`);
+      if (!passInput || !toggleBtn) {
+        return;
+      }
+
+      const nextType = passInput.type === 'password' ? 'text' : 'password';
+      passInput.type = nextType;
+
+      const isVisible = nextType === 'text';
+      const nextTitle = isVisible ? 'Hide password' : 'Show password';
+      toggleBtn.title = nextTitle;
+      toggleBtn.setAttribute('aria-label', nextTitle);
+
+      const icon = toggleBtn.querySelector('i');
+      if (icon) {
+        icon.className = `fas ${isVisible ? 'fa-eye-slash' : 'fa-eye'}`;
+      }
+    }
+
+    function openAddLabelModal() {
+      const overlay = document.getElementById('accountsLabelModalOverlay');
+      const input = document.getElementById('accountsLabelInput');
+      if (!overlay || !input) {
+        return;
+      }
+
+      input.value = '';
+      overlay.classList.add('show');
+      setTimeout(() => input.focus(), 0);
+    }
+
+    function closeAddLabelModal() {
+      const overlay = document.getElementById('accountsLabelModalOverlay');
+      if (overlay) {
+        overlay.classList.remove('show');
+      }
+    }
+
+    function handleAccountsLabelInputKeydown(event) {
+      if (!event || event.key !== 'Enter') {
+        return;
+      }
+      event.preventDefault();
+      saveAddLabelModal();
+    }
+
+    function _scopeIncludesAccount(ownerUsername, scopeKey) {
+      const owner = normalizeOwnerKey(ownerUsername || 'master');
+      const scope = String(scopeKey || '').trim().toLowerCase() || 'all';
+      if (!globalIsMaster) {
+        return owner === scope;
+      }
+      if (scope === 'all') {
+        return true;
+      }
+      return owner === scope;
+    }
+
+    function saveAddLabelModal() {
+      syncAccountsFromDom();
+
+      const input = document.getElementById('accountsLabelInput');
+      if (!input) {
+        return;
+      }
+
+      const labelMeta = normalizeAccountLabelGroup(input.value || '');
+      if (labelMeta.key === 'generic') {
+        showError('Please enter a specific label name. Generic label already exists by default.');
+        return;
+      }
+
+      const scope = getActiveLabelScope();
+
+      const labelExistsInAccounts = globalAccounts.some(acc => {
+        if (!_scopeIncludesAccount(acc.owner_username, scope)) {
+          return false;
+        }
+        return normalizeAccountLabelGroup(acc.model_label || '').key === labelMeta.key;
+      });
+
+      const labelExistsInDrafts = globalAccountLabelDrafts.some(item => {
+        return String(item.key || '') === labelMeta.key && String(item.scope || '') === scope;
+      });
+
+      if (labelExistsInAccounts || labelExistsInDrafts) {
+        showError(`Label "${labelMeta.display}" already exists in this view.`);
+        return;
+      }
+
+      globalAccountLabelDrafts.push({
+        key: labelMeta.key,
+        display: labelMeta.display,
+        value: labelMeta.value,
+        scope,
+      });
+
+      setAccountLabelExpanded(labelMeta.key, true);
+      closeAddLabelModal();
+      renderAccounts();
+      showToast(`Label ${labelMeta.display} added. Use Add Account inside that label.`);
+    }
+
+    function openEditLabelModal(rawLabelKey, rawDisplayName) {
+      const labelMeta = normalizeAccountLabelGroup(rawDisplayName || rawLabelKey || '');
+      const overlay = document.getElementById('accountsRenameLabelModalOverlay');
+      const input = document.getElementById('accountsRenameLabelInput');
+      if (!overlay || !input) {
+        return;
+      }
+
+      activeRenameLabelKey = String(rawLabelKey || '').trim().toLowerCase();
+      activeRenameLabelScope = getActiveLabelScope();
+      input.value = labelMeta.display;
+      overlay.classList.add('show');
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 0);
+    }
+
+    function closeRenameLabelModal() {
+      const overlay = document.getElementById('accountsRenameLabelModalOverlay');
+      if (overlay) {
+        overlay.classList.remove('show');
+      }
+      activeRenameLabelKey = '';
+      activeRenameLabelScope = 'all';
+    }
+
+    function handleRenameLabelInputKeydown(event) {
+      if (!event || event.key !== 'Enter') {
+        return;
+      }
+      event.preventDefault();
+      saveRenameLabelModal();
+    }
+
+    function saveRenameLabelModal() {
+      syncAccountsFromDom();
+
+      const sourceKey = String(activeRenameLabelKey || '').trim().toLowerCase();
+      if (!sourceKey) {
+        closeRenameLabelModal();
+        return;
+      }
+
+      const input = document.getElementById('accountsRenameLabelInput');
+      if (!input) {
+        return;
+      }
+
+      const nextMeta = normalizeAccountLabelGroup(input.value || '');
+      if (nextMeta.key === 'generic') {
+        showError('Please enter a specific label name.');
+        return;
+      }
+
+      const scope = String(activeRenameLabelScope || getActiveLabelScope()).trim().toLowerCase() || 'all';
+
+      const duplicateInAccounts = globalAccounts.some(acc => {
+        if (!_scopeIncludesAccount(acc.owner_username, scope)) {
+          return false;
+        }
+        const key = normalizeAccountLabelGroup(acc.model_label || '').key;
+        return key === nextMeta.key && key !== sourceKey;
+      });
+      if (duplicateInAccounts) {
+        showError(`Label "${nextMeta.display}" already exists in this view.`);
+        return;
+      }
+
+      const duplicateInDrafts = (globalAccountLabelDrafts || []).some(item => {
+        const itemScope = String(item && item.scope || 'all').trim().toLowerCase() || 'all';
+        const itemKey = String(item && item.key || '').trim().toLowerCase();
+        return itemScope === scope && itemKey === nextMeta.key && itemKey !== sourceKey;
+      });
+      if (duplicateInDrafts) {
+        showError(`Label "${nextMeta.display}" already exists in this view.`);
+        return;
+      }
+
+      let renamedAccounts = 0;
+      globalAccounts.forEach(acc => {
+        if (!_scopeIncludesAccount(acc.owner_username, scope)) {
+          return;
+        }
+
+        const key = normalizeAccountLabelGroup(acc.model_label || '').key;
+        if (key !== sourceKey) {
+          return;
+        }
+
+        acc.model_label = nextMeta.value;
+        renamedAccounts += 1;
+      });
+
+      let renamedDrafts = 0;
+      globalAccountLabelDrafts = (globalAccountLabelDrafts || []).map(item => {
+        const itemScope = String(item && item.scope || 'all').trim().toLowerCase() || 'all';
+        const itemKey = String(item && item.key || '').trim().toLowerCase();
+        if (itemScope !== scope || itemKey !== sourceKey) {
+          return item;
+        }
+
+        renamedDrafts += 1;
+        return {
+          ...item,
+          key: nextMeta.key,
+          display: nextMeta.display,
+          value: nextMeta.value,
+        };
+      });
+
+      if (!renamedAccounts && !renamedDrafts) {
+        showError('No matching label found to rename in this view.');
+        return;
+      }
+
+      setAccountLabelExpanded(sourceKey, false);
+      setAccountLabelExpanded(nextMeta.key, true);
+      closeRenameLabelModal();
+      renderAccounts();
+      showToast(`Label renamed to ${nextMeta.display}.`);
+    }
+
+    function confirmModal(message, title = 'Confirm', confirmLabel = 'Confirm') {
+      const titleEl = document.getElementById('confirmModalTitle');
+      const textEl = document.getElementById('confirmModalText');
+      const btnEl = document.getElementById('confirmModalConfirmBtn');
+
+      if (titleEl) titleEl.innerText = title;
+      if (textEl) textEl.innerText = message || 'Are you sure?';
+      if (btnEl) btnEl.innerText = confirmLabel;
+
+      document.getElementById('confirmModalOverlay').classList.add('show');
+
+      return new Promise(resolve => {
+        confirmModalResolver = resolve;
+      });
+    }
+
+    function resolveConfirmModal(value) {
+      document.getElementById('confirmModalOverlay').classList.remove('show');
+      if (confirmModalResolver) {
+        const resolve = confirmModalResolver;
+        confirmModalResolver = null;
+        resolve(!!value);
+      }
+    }
+
+    async function apiJson(url, options = {}) {
+      const res = await fetch(url, options);
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (e) {}
+
+      if (!res.ok || data.success === false) {
+        const err = (data && data.error) ? data.error : `Request failed (${res.status})`;
+        throw new Error(err);
+      }
+      return data;
+    }
+
+    function renderCurrentUserPill() {
+      const pill = document.getElementById('currentUserPill');
+      if (!pill) return;
+      const roleLabel = globalIsMaster ? 'MASTER' : 'EMPLOYEE';
+      pill.innerText = `${roleLabel}: ${globalCurrentUser.username || '-'}`;
+    }
+
+    function applyRoleBasedUi() {
+      const navDashboard = document.getElementById('navDashboard');
+      const tabDashboard = document.getElementById('tab-dashboard');
+      const navAllActivity = document.getElementById('navAllActivity');
+      const tabAllActivity = document.getElementById('tab-all-activity');
+
+      if (navDashboard) navDashboard.style.display = globalIsMaster ? '' : 'none';
+      if (tabDashboard) tabDashboard.style.display = globalIsMaster ? '' : 'none';
+      if (navAllActivity) navAllActivity.style.display = globalIsMaster ? '' : 'none';
+      if (tabAllActivity) tabAllActivity.style.display = globalIsMaster ? '' : 'none';
+
+      const ownerHeader = document.getElementById('accountsOwnerHeader');
+      if (ownerHeader) ownerHeader.style.display = globalIsMaster ? '' : 'none';
+
+      const userCard = document.getElementById('userManagementCard');
+      if (userCard) userCard.style.display = globalIsMaster ? '' : 'none';
+
+      const employeeActivityCard = document.getElementById('employeeActivityCard');
+      if (employeeActivityCard) employeeActivityCard.style.display = globalIsMaster ? '' : 'none';
+
+      const allActivityCard = document.getElementById('allActivityCard');
+      if (allActivityCard) allActivityCard.style.display = globalIsMaster ? '' : 'none';
+
+      const navTargets = document.getElementById('navTargets');
+      const navSuspended = document.getElementById('navSuspended');
+      const navSettings = document.getElementById('navSettings');
+      const modelMessageMetaHeader = document.getElementById('modelMessageMetaHeader');
+      const btnAddModelSet = document.getElementById('btnAddModelSet');
+      const btnSaveModelMessages = document.getElementById('btnSaveModelMessages');
+      const canEditTargets = canManageTargets();
+      if (navTargets) navTargets.style.display = '';
+      if (navSuspended) navSuspended.style.display = '';
+      if (navSettings) navSettings.style.display = globalIsMaster ? '' : 'none';
+      if (modelMessageMetaHeader) modelMessageMetaHeader.style.display = globalIsMaster ? '' : 'none';
+      if (btnAddModelSet) btnAddModelSet.style.display = canEditTargets ? '' : 'none';
+      if (btnSaveModelMessages) btnSaveModelMessages.style.display = canEditTargets ? '' : 'none';
+
+      if (!globalIsMaster) {
+        globalEmployeeActivity = [];
+        globalAllActivity = [];
+        globalAllActivityByDay = [];
+        renderEmployeeActivity();
+        renderAllActivity();
+
+        const active = document.querySelector('.nav-btn.active');
+        if (active && (active.id === 'navDashboard' || active.id === 'navAllActivity' || active.id === 'navSettings')) {
+          const accountsBtn = document.getElementById('navAccounts');
+          if (accountsBtn) openAccountsSidebar(accountsBtn);
+        }
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function maskProxyForDisplay(value) {
+      const clean = String(value || '').trim();
+      if (!clean || !clean.includes('@')) {
+        return clean;
+      }
+
+      let prefix = '';
+      let rest = clean;
+      if (clean.includes('://')) {
+        const parts = clean.split('://');
+        prefix = `${parts[0]}://`;
+        rest = parts.slice(1).join('://');
+      }
+
+      const atIndex = rest.lastIndexOf('@');
+      if (atIndex < 0) {
+        return clean;
+      }
+
+      const creds = rest.slice(0, atIndex);
+      const host = rest.slice(atIndex + 1);
+      const colonIndex = creds.indexOf(':');
+      const safeCreds = colonIndex >= 0 ? `${creds.slice(0, colonIndex)}:***` : '***';
+      return `${prefix}${safeCreds}@${host}`;
+    }
+
+    function splitProxyEntries(rawValue) {
+      return String(rawValue || '')
+        .split(/[\r\n,;]+/)
+        .map(x => String(x || '').trim())
+        .filter(x => x);
+    }
+
+    function normalizeProxyInputForSave(rawValue, maxCount = MAX_PROXIES_PER_ACCOUNT) {
+      const unique = [];
+      const seen = new Set();
+
+      splitProxyEntries(rawValue).forEach(proxy => {
+        const key = proxy.toLowerCase();
+        if (seen.has(key)) {
+          return;
+        }
+        seen.add(key);
+        unique.push(proxy);
+      });
+
+      return {
+        proxies: unique.slice(0, maxCount),
+        overflow: Math.max(0, unique.length - maxCount),
+        totalUnique: unique.length,
+      };
+    }
+
+    function maskProxyListForDisplay(rawValue) {
+      const normalized = normalizeProxyInputForSave(rawValue, MAX_PROXIES_PER_ACCOUNT);
+      if (!normalized.proxies.length) {
+        return '';
+      }
+      return normalized.proxies.map(maskProxyForDisplay).join(', ');
+    }
+
+    function normalizeModelKey(value) {
+      return String(value || '').trim().replace(/^@+/, '').toLowerCase();
+    }
+
+    function normalizeOwnerKey(value) {
+      const clean = String(value || '').trim().toLowerCase();
+      return clean || 'master';
+    }
+
+    function getActiveLabelScope() {
+      const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+      if (!globalIsMaster) {
+        return myOwnerKey;
+      }
+
+      const active = String(activeAccountOwnerTab || '').trim().toLowerCase();
+      return active || 'all';
+    }
+
+    function clampPageNumber(pageValue, totalPages) {
+      const safeTotal = Math.max(1, Number(totalPages) || 1);
+      const parsed = Number(pageValue);
+      if (!Number.isFinite(parsed)) {
+        return 1;
+      }
+      return Math.min(Math.max(1, Math.floor(parsed)), safeTotal);
+    }
+
+    function renderPagination(containerId, currentPage, totalPages, totalRows, onChangeFnName, pageSize) {
+      const container = document.getElementById(containerId);
+      if (!container) {
+        return;
+      }
+
+      if (!totalRows || totalRows <= pageSize || totalPages <= 1) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+      }
+
+      const start = ((currentPage - 1) * pageSize) + 1;
+      const end = Math.min(totalRows, currentPage * pageSize);
+      const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+      const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+
+      container.style.display = 'flex';
+      container.innerHTML = `
+        <div class="page-summary">Showing ${start}-${end} of ${totalRows}</div>
+        <div class="page-controls">
+          <button type="button" class="page-btn" ${prevDisabled} onclick="${onChangeFnName}(${currentPage - 1})">Prev</button>
+          <span class="page-indicator">Page ${currentPage} / ${totalPages}</span>
+          <button type="button" class="page-btn" ${nextDisabled} onclick="${onChangeFnName}(${currentPage + 1})">Next</button>
+        </div>
+      `;
+    }
+
+    function buildAccountsOwnerTabs() {
+      const owners = Array.from(new Set(
+        (globalAccounts || []).map(acc => normalizeOwnerKey(acc.owner_username || 'master'))
+      )).sort();
+
+      if (!globalIsMaster) {
+        const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+        if (!owners.includes(myOwnerKey)) {
+          owners.unshift(myOwnerKey);
+        }
+      }
+
+      globalAccountOwnerTabs = owners;
+
+      if (!globalIsMaster) {
+        const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+        if (!owners.includes(activeAccountOwnerTab)) {
+          activeAccountOwnerTab = myOwnerKey;
+        }
+        return;
+      }
+
+      if (activeAccountOwnerTab === 'all') {
+        return;
+      }
+
+      if (!owners.includes(activeAccountOwnerTab)) {
+        activeAccountOwnerTab = 'all';
+      }
+    }
+
+    function setAccountsOwnerTab(ownerKey) {
+      syncAccountsFromDom();
+      if (ownerKey === 'all') {
+        if (!globalIsMaster) {
+          return;
+        }
+        activeAccountOwnerTab = 'all';
+      } else {
+        const normalized = normalizeOwnerKey(ownerKey);
+        if (!globalAccountOwnerTabs.includes(normalized)) {
+          return;
+        }
+        activeAccountOwnerTab = normalized;
+      }
+      accountsPage = 1;
+      renderAccountsOwnerTabs();
+      renderAccounts();
+    }
+
+    function setAccountsPage(nextPage) {
+      syncAccountsFromDom();
+      accountsPage = Number(nextPage) || 1;
+      renderAccounts();
+    }
+
+    function normalizeSearchQuery(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function setAccountsSearch(rawValue) {
+      syncAccountsFromDom();
+      accountsSearchQuery = String(rawValue || '');
+      accountsPage = 1;
+      renderAccounts();
+    }
+
+    function clearAccountsSearch() {
+      const input = document.getElementById('accountsSearchInput');
+      if (input) input.value = '';
+      setAccountsSearch('');
+    }
+
+    function setModelMessagesSearch(rawValue) {
+      syncModelMessagesFromDom();
+      modelMessagesSearchQuery = String(rawValue || '');
+      modelMessagesPage = 1;
+      renderModelMessages();
+    }
+
+    function clearModelMessagesSearch() {
+      const input = document.getElementById('modelMessagesSearchInput');
+      if (input) input.value = '';
+      setModelMessagesSearch('');
+    }
+
+    function setEmployeeActivityPage(nextPage) {
+      employeeActivityPage = Number(nextPage) || 1;
+      renderEmployeeActivity();
+    }
+
+    function setAllActivityPage(nextPage) {
+      allActivityPage = Number(nextPage) || 1;
+      renderAllActivity();
+    }
+
+    function renderAccountsOwnerTabs() {
+      const tabsEl = document.getElementById('accountsOwnerTabs');
+      if (!tabsEl) {
+        return;
+      }
+
+      if (!globalIsMaster) {
+        const chips = [];
+        const owners = globalAccountOwnerTabs.length
+          ? globalAccountOwnerTabs
+          : [normalizeOwnerKey(globalCurrentUser.username || 'employee')];
+
+        owners.forEach(owner => {
+          const safeOwner = escapeHtml(owner);
+          const activeClass = activeAccountOwnerTab === owner ? 'active' : '';
+          chips.push(
+            `<button type="button" class="owner-tab-btn ${activeClass}" onclick="setAccountsOwnerTab(decodeURIComponent('${encodeURIComponent(owner)}'))">@${safeOwner}</button>`
+          );
+        });
+
+        tabsEl.innerHTML = chips.join('');
+        return;
+      }
+
+      const chips = [];
+      const allActive = activeAccountOwnerTab === 'all' ? 'active' : '';
+      chips.push(`<button type="button" class="owner-tab-btn ${allActive}" onclick="setAccountsOwnerTab('all')">All Accounts</button>`);
+
+      globalAccountOwnerTabs.forEach(owner => {
+        const safeOwner = escapeHtml(owner);
+        const activeClass = activeAccountOwnerTab === owner ? 'active' : '';
+        chips.push(
+          `<button type="button" class="owner-tab-btn ${activeClass}" onclick="setAccountsOwnerTab(decodeURIComponent('${encodeURIComponent(owner)}'))">@${safeOwner}</button>`
+        );
+      });
+
+      tabsEl.innerHTML = chips.join('');
+    }
+
+    function parseMessageLines(raw) {
+      return String(raw || '').split('\n').map(x => x.trim()).filter(x => x);
+    }
+
+    function normalizeBooleanFlag(rawValue, defaultValue = true) {
+      if (typeof rawValue === 'boolean') {
+        return rawValue;
+      }
+      if (rawValue === null || rawValue === undefined) {
+        return !!defaultValue;
+      }
+      if (typeof rawValue === 'number') {
+        return Number(rawValue) !== 0;
+      }
+
+      const text = String(rawValue).trim().toLowerCase();
+      if (['', 'none', 'null'].includes(text)) {
+        return !!defaultValue;
+      }
+      if (['0', 'false', 'off', 'no', 'disable', 'disabled'].includes(text)) {
+        return false;
+      }
+      if (['1', 'true', 'on', 'yes', 'enable', 'enabled'].includes(text)) {
+        return true;
+      }
+
+      return !!defaultValue;
+    }
+
+    function parseOptionalNumber(rawValue) {
+      const text = String(rawValue || '').trim();
+      if (!text) {
+        return null;
+      }
+      const num = Number(text);
+      return Number.isFinite(num) ? num : null;
+    }
+
+    function cacheLikerCustomLimits(postsVal, likesVal) {
+      if (Number.isFinite(postsVal) && postsVal > 0) {
+        likerCustomPosts = postsVal;
+      }
+      if (Number.isFinite(likesVal) && likesVal > 0) {
+        likerCustomLikes = likesVal;
+      }
+    }
+
+    function setLikerAllToggleState(enabled) {
+      const toggle = document.getElementById('likerAllToggle');
+      const postsEl = document.getElementById('set_LIKE_POSTS_COUNT');
+      const likesEl = document.getElementById('set_LIKE_PER_POST_COUNT');
+      if (!toggle || !postsEl || !likesEl) {
+        return;
+      }
+
+      if (enabled) {
+        const postsVal = parseOptionalNumber(postsEl.value);
+        const likesVal = parseOptionalNumber(likesEl.value);
+        cacheLikerCustomLimits(postsVal, likesVal);
+
+        postsEl.value = 0;
+        likesEl.value = 0;
+        postsEl.disabled = true;
+        likesEl.disabled = true;
+      } else {
+        postsEl.disabled = false;
+        likesEl.disabled = false;
+
+        if (likerCustomPosts !== null) {
+          postsEl.value = likerCustomPosts;
+        }
+        if (likerCustomLikes !== null) {
+          likesEl.value = likerCustomLikes;
+        }
+      }
+
+      toggle.checked = !!enabled;
+    }
+
+    function syncLikerToggleFromInputs() {
+      const toggle = document.getElementById('likerAllToggle');
+      const postsEl = document.getElementById('set_LIKE_POSTS_COUNT');
+      const likesEl = document.getElementById('set_LIKE_PER_POST_COUNT');
+      if (!toggle || !postsEl || !likesEl) {
+        return;
+      }
+
+      const postsVal = parseOptionalNumber(postsEl.value);
+      const likesVal = parseOptionalNumber(likesEl.value);
+      const hasValues = postsVal !== null && likesVal !== null;
+      const shouldEnableAll = hasValues && postsVal <= 0 && likesVal <= 0;
+
+      if (shouldEnableAll) {
+        setLikerAllToggleState(true);
+      } else if (toggle.checked) {
+        setLikerAllToggleState(false);
+      } else {
+        cacheLikerCustomLimits(postsVal, likesVal);
+      }
+    }
+
+    function initLikerAllToggle() {
+      const toggle = document.getElementById('likerAllToggle');
+      const postsEl = document.getElementById('set_LIKE_POSTS_COUNT');
+      const likesEl = document.getElementById('set_LIKE_PER_POST_COUNT');
+      if (!toggle || !postsEl || !likesEl) {
+        return;
+      }
+
+      if (!likerToggleInitialized) {
+        toggle.addEventListener('change', () => {
+          setLikerAllToggleState(toggle.checked);
+        });
+        postsEl.addEventListener('input', syncLikerToggleFromInputs);
+        likesEl.addEventListener('input', syncLikerToggleFromInputs);
+        likerToggleInitialized = true;
+      }
+
+      const postsVal = parseOptionalNumber(postsEl.value);
+      const likesVal = parseOptionalNumber(likesEl.value);
+      cacheLikerCustomLimits(postsVal, likesVal);
+      syncLikerToggleFromInputs();
+    }
+
+    function canManageTargets() {
+      const role = String(globalCurrentUser.role || '').toLowerCase();
+      return role === 'master' || role === 'employee';
+    }
+
+    function getModelMessageMeta(modelName) {
+      const key = normalizeModelKey(modelName);
+      if (!key) return null;
+      const raw = globalModelMessageMeta[key];
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+        return null;
+      }
+      return raw;
+    }
+
+    function formatModelMessageMeta(modelName) {
+      const meta = getModelMessageMeta(modelName);
+      if (!meta) return '-';
+
+      const by = String(meta.updated_by || meta.created_by || '').trim();
+      const whenRaw = String(meta.updated_at || meta.created_at || '').trim();
+      const when = whenRaw ? formatActivityTime(whenRaw) : '';
+
+      if (by && when && when !== '-') {
+        return `${by} (${when})`;
+      }
+      if (by) {
+        return by;
+      }
+      if (when && when !== '-') {
+        return when;
+      }
+      return '-';
+    }
+
+    function parseModelNamesFromActivityDetails(details) {
+      if (!details || typeof details !== 'object' || Array.isArray(details)) {
+        return [];
+      }
+
+      const raw = String(details.model_names || '').trim();
+      if (!raw) {
+        return [];
+      }
+
+      return raw
+        .split(',')
+        .map(part => normalizeModelKey(String(part || '').trim().replace(/\.\.\.$/, '')))
+        .filter(Boolean);
+    }
+
+    function backfillModelMessageMetaFromActivity() {
+      if (!globalIsMaster) {
+        return;
+      }
+
+      const activityLogs = (Array.isArray(globalAllActivity) && globalAllActivity.length)
+        ? globalAllActivity
+        : globalEmployeeActivity;
+
+      if (!Array.isArray(activityLogs) || !activityLogs.length) {
+        return;
+      }
+
+      const missingKeys = new Set(
+        globalModelMessages
+          .map(entry => normalizeModelKey(entry.model || ''))
+          .filter(Boolean)
+          .filter(modelKey => !getModelMessageMeta(modelKey))
+      );
+
+      if (!missingKeys.size) {
+        return;
+      }
+
+      let fallbackActor = '';
+      let fallbackTime = '';
+
+      activityLogs.forEach(item => {
+        if (String(item.action || '').trim() !== 'update_model_message_map') {
+          return;
+        }
+
+        const actor = String(item.actor_username || '').trim();
+        const when = String(item.created_at || '').trim();
+
+        if (!fallbackActor && actor) {
+          fallbackActor = actor;
+          fallbackTime = when;
+        }
+
+        const modelKeys = parseModelNamesFromActivityDetails(item.details || {});
+        modelKeys.forEach(modelKey => {
+          if (!missingKeys.has(modelKey)) {
+            return;
+          }
+
+          globalModelMessageMeta[modelKey] = {
+            created_by: actor || fallbackActor || 'unknown',
+            created_at: when || fallbackTime || '',
+            updated_by: actor || fallbackActor || 'unknown',
+            updated_at: when || fallbackTime || '',
+          };
+          missingKeys.delete(modelKey);
+        });
+      });
+
+      if (missingKeys.size && fallbackActor) {
+        missingKeys.forEach(modelKey => {
+          globalModelMessageMeta[modelKey] = {
+            created_by: fallbackActor,
+            created_at: fallbackTime || '',
+            updated_by: fallbackActor,
+            updated_at: fallbackTime || '',
+          };
+        });
+      }
+    }
+
+    function renderModelsDatalist() {
+      const datalist = document.getElementById('modelsDatalist');
+      if (!datalist) return;
+      datalist.innerHTML = globalModels
+        .map(model => `<option value="${escapeHtml(String(model).replace(/^@+/, ''))}"></option>`)
+        .join('');
+    }
+
+    function formatActivityTime(raw) {
+      if (!raw) return '-';
+      const dt = new Date(raw);
+      if (Number.isNaN(dt.getTime())) return String(raw);
+      return dt.toLocaleString();
+    }
+
+    function formatActivityDay(raw) {
+      if (!raw) return '-';
+      const dt = new Date(raw);
+      if (!Number.isNaN(dt.getTime())) {
+        return dt.toLocaleDateString();
+      }
+      const text = String(raw);
+      return text.slice(0, 10) || text;
+    }
+
+    function formatActivityDetails(details) {
+      if (details === null || details === undefined) return '-';
+      if (typeof details === 'string') return details || '-';
+      if (Array.isArray(details)) {
+        return details.map(x => String(x)).join(', ') || '-';
+      }
+      if (typeof details === 'object') {
+        const parts = Object.entries(details).map(([k, v]) => `${k}=${String(v)}`);
+        const joined = parts.join(', ');
+        return joined.length > 120 ? `${joined.slice(0, 117)}...` : (joined || '-');
+      }
+      return String(details);
+    }
+
+    function isEditingModelMessages() {
+      const active = document.activeElement;
+      if (!active) return false;
+      const activeId = String(active.id || '');
+      return activeId.startsWith('mm_model_') || activeId.startsWith('mm_msgs_');
+    }
+
+    function renderEmployeeActivity() {
+      const tbody = document.querySelector('#employeeActivityTable tbody');
+      if (!tbody) return;
+      const paginationId = 'employeeActivityPagination';
+
+      if (!globalIsMaster) {
+        tbody.innerHTML = '';
+        employeeActivityPage = 1;
+        renderPagination(paginationId, 1, 1, 0, 'setEmployeeActivityPage', ACTIVITY_PAGE_SIZE);
+        return;
+      }
+
+      const rows = Array.isArray(globalEmployeeActivity) ? globalEmployeeActivity : [];
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted); font-size:0.85rem;">No employee activity yet.</td></tr>';
+        employeeActivityPage = 1;
+        renderPagination(paginationId, 1, 1, 0, 'setEmployeeActivityPage', ACTIVITY_PAGE_SIZE);
+        return;
+      }
+
+      const totalRows = rows.length;
+      const totalPages = Math.max(1, Math.ceil(totalRows / ACTIVITY_PAGE_SIZE));
+      employeeActivityPage = clampPageNumber(employeeActivityPage, totalPages);
+      const startOffset = (employeeActivityPage - 1) * ACTIVITY_PAGE_SIZE;
+      const pageRows = rows.slice(startOffset, startOffset + ACTIVITY_PAGE_SIZE);
+
+      tbody.innerHTML = pageRows.map(item => {
+        const when = escapeHtml(formatActivityTime(item.created_at));
+        const actor = escapeHtml(item.actor_username || '-');
+        const action = escapeHtml(String(item.action || '-').replace(/_/g, ' '));
+        const targetRaw = [item.target_type || '', item.target_value || ''].filter(Boolean).join(': ');
+        const target = escapeHtml(targetRaw || '-');
+        const details = escapeHtml(formatActivityDetails(item.details));
+
+        return `
+          <tr>
+            <td>${when}</td>
+            <td>${actor}</td>
+            <td>${action}</td>
+            <td>${target}</td>
+            <td>${details}</td>
+          </tr>
+        `;
+      }).join('');
+
+      renderPagination(paginationId, employeeActivityPage, totalPages, totalRows, 'setEmployeeActivityPage', ACTIVITY_PAGE_SIZE);
+    }
+
+    function renderAllActivity() {
+      const detailTbody = document.querySelector('#allActivityTable tbody');
+      const dayTbody = document.querySelector('#allActivityByDayTable tbody');
+      if (!detailTbody || !dayTbody) return;
+      const paginationId = 'allActivityPagination';
+
+      if (!globalIsMaster) {
+        detailTbody.innerHTML = '';
+        dayTbody.innerHTML = '';
+        allActivityPage = 1;
+        renderPagination(paginationId, 1, 1, 0, 'setAllActivityPage', ACTIVITY_PAGE_SIZE);
+        return;
+      }
+
+      const summaryRows = Array.isArray(globalAllActivityByDay) ? globalAllActivityByDay : [];
+      if (!summaryRows.length) {
+        dayTbody.innerHTML = '<tr><td colspan="2" style="color: var(--text-muted); font-size:0.85rem;">No 24-hour activity summary yet.</td></tr>';
+      } else {
+        dayTbody.innerHTML = summaryRows.map(item => {
+          const day = escapeHtml(String(item.day || '-'));
+          const count = escapeHtml(String(item.count || 0));
+          return `
+            <tr>
+              <td>${day}</td>
+              <td>${count}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      const detailRows = Array.isArray(globalAllActivity) ? globalAllActivity : [];
+      if (!detailRows.length) {
+        detailTbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); font-size:0.85rem;">No activity in the last 24 hours.</td></tr>';
+        allActivityPage = 1;
+        renderPagination(paginationId, 1, 1, 0, 'setAllActivityPage', ACTIVITY_PAGE_SIZE);
+        return;
+      }
+
+      const totalRows = detailRows.length;
+      const totalPages = Math.max(1, Math.ceil(totalRows / ACTIVITY_PAGE_SIZE));
+      allActivityPage = clampPageNumber(allActivityPage, totalPages);
+      const startOffset = (allActivityPage - 1) * ACTIVITY_PAGE_SIZE;
+      const pageRows = detailRows.slice(startOffset, startOffset + ACTIVITY_PAGE_SIZE);
+
+      detailTbody.innerHTML = pageRows.map(item => {
+        const when = escapeHtml(formatActivityTime(item.created_at));
+        const day = escapeHtml(formatActivityDay(item.created_at));
+        const actor = escapeHtml(item.actor_username || '-');
+        const role = escapeHtml(String(item.actor_role || '-').toUpperCase());
+        const action = escapeHtml(String(item.action || '-').replace(/_/g, ' '));
+        const targetRaw = [item.target_type || '', item.target_value || ''].filter(Boolean).join(': ');
+        const target = escapeHtml(targetRaw || '-');
+        const details = escapeHtml(formatActivityDetails(item.details));
+
+        return `
+          <tr>
+            <td>${when}</td>
+            <td>${day}</td>
+            <td>${actor}</td>
+            <td>${role}</td>
+            <td>${action}</td>
+            <td>${target}</td>
+            <td>${details}</td>
+          </tr>
+        `;
+      }).join('');
+
+      renderPagination(paginationId, allActivityPage, totalPages, totalRows, 'setAllActivityPage', ACTIVITY_PAGE_SIZE);
+    }
+
+    async function loadEmployeeActivity() {
+      if (!globalIsMaster) {
+        globalEmployeeActivity = [];
+        renderEmployeeActivity();
+        return;
+      }
+
+      try {
+        const data = await apiJson('/api/activity/employee?limit=150');
+        globalEmployeeActivity = data.logs || [];
+        renderEmployeeActivity();
+
+        if (globalIsMaster && globalModelMessages.length) {
+          backfillModelMessageMetaFromActivity();
+          if (!isEditingModelMessages()) {
+            syncModelMessagesFromDom();
+            renderModelMessages();
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load employee activity', e);
+      }
+    }
+
+    async function loadAllActivity() {
+      if (!globalIsMaster) {
+        globalAllActivity = [];
+        globalAllActivityByDay = [];
+        renderAllActivity();
+        return;
+      }
+
+      try {
+        const data = await apiJson('/api/activity/all?hours=24&limit=500');
+        globalAllActivity = Array.isArray(data.logs) ? data.logs : [];
+        globalAllActivityByDay = Array.isArray(data.by_day) ? data.by_day : [];
+        renderAllActivity();
+
+        if (globalIsMaster && globalModelMessages.length) {
+          backfillModelMessageMetaFromActivity();
+          if (!isEditingModelMessages()) {
+            syncModelMessagesFromDom();
+            renderModelMessages();
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load all activity', e);
+      }
+    }
+
+    function mergeEmployeeQueueIntoAccounts() {
+      if (globalIsMaster) {
+        return;
+      }
+
+      const ownedAccounts = globalAccounts.map(acc => ({
+        ...acc,
+        custom_messages: Array.isArray(acc.custom_messages) ? acc.custom_messages : [],
+        is_suspended: normalizeBooleanFlag(acc.is_suspended, false),
+        automation_enabled: normalizeBooleanFlag(acc.is_suspended, false) ? false : (acc.automation_enabled !== false),
+        shared_readonly: false,
+      }));
+
+      const seen = new Set(
+        ownedAccounts
+          .map(acc => normalizeModelKey(acc.username || ''))
+          .filter(Boolean)
+      );
+
+      (globalQueueAccounts || []).forEach(item => {
+        const username = String(item.username || '').trim();
+        if (!username) {
+          return;
+        }
+
+        const key = normalizeModelKey(username);
+        if (seen.has(key)) {
+          return;
+        }
+
+        seen.add(key);
+        ownedAccounts.push({
+          username,
+          password: '',
+          model_label: item.model_label || '',
+          proxy: String(item.proxy || '').trim(),
+          profile_note: String(item.profile_note || '').trim(),
+          custom_messages: Array.isArray(item.custom_messages) ? item.custom_messages : [],
+          is_suspended: normalizeBooleanFlag(item.is_suspended, false),
+          automation_enabled: normalizeBooleanFlag(item.is_suspended, false) ? false : (item.automation_enabled !== false),
+          owner_username: item.owner_username || '',
+          cookies_raw: '',
+          cookies_touched: false,
+          shared_readonly: true,
+        });
+      });
+
+      globalAccounts = ownedAccounts;
+    }
+
+    // ── API Loads ──
+    async function loadConfig() {
+      try {
+        const data = await apiJson('/api/config');
+
+        globalCurrentUser = data.current_user || {username: '', role: 'employee'};
+        globalIsMaster = globalCurrentUser.role === 'master';
+        globalUsers = globalIsMaster ? (data.users || []) : [];
+        renderCurrentUserPill();
+        applyRoleBasedUi();
+        renderUsers();
+        await loadEmployeeActivity();
+        await loadAllActivity();
+
+        globalAccountLabelDrafts = [];
+        
+        // Populate Accounts
+        globalAccounts = (data.accounts || []).map(acc => ({
+          ...acc,
+          model_label: String(acc.model_label || '').trim(),
+          proxy: String(acc.proxy || '').trim(),
+          profile_note: String(acc.profile_note || '').trim(),
+          custom_messages: Array.isArray(acc.custom_messages) ? acc.custom_messages : [],
+          is_suspended: normalizeBooleanFlag(acc.is_suspended, false),
+          automation_enabled: normalizeBooleanFlag(acc.is_suspended, false) ? false : (acc.automation_enabled !== false),
+          cookies_raw: acc.cookies_raw || '',
+          cookies_touched: false,
+          shared_readonly: false,
+        }));
+
+        globalQueueAccounts = Array.isArray(data.accounts_queue)
+          ? data.accounts_queue.map(acc => ({
+              ...acc,
+              is_suspended: normalizeBooleanFlag(acc.is_suspended, false),
+              automation_enabled: normalizeBooleanFlag(acc.is_suspended, false)
+                ? false
+                : normalizeBooleanFlag(acc.automation_enabled, true),
+            }))
+          : [];
+        mergeEmployeeQueueIntoAccounts();
+        buildAccountsOwnerTabs();
+        accountsPage = 1;
+        renderAccountsOwnerTabs();
+        renderAccounts();
+        
+        // Populate Models
+        globalModels = data.models || [];
+        const modelsTextarea = document.getElementById('modelsTextarea');
+        if (modelsTextarea) {
+          modelsTextarea.value = globalModels.join('\n');
+        }
+        renderModelsDatalist();
+        
+        // Populate Settings
+        globalSettings = data.settings || {};
+        globalModelMessages = [];
+        globalModelMessageMeta = {};
+
+        const rawModelMeta = globalSettings.MODEL_MESSAGE_META || {};
+        if (rawModelMeta && typeof rawModelMeta === 'object' && !Array.isArray(rawModelMeta)) {
+          Object.keys(rawModelMeta).forEach(modelKey => {
+            const key = normalizeModelKey(modelKey);
+            if (!key) {
+              return;
+            }
+
+            const meta = rawModelMeta[modelKey];
+            if (!meta || typeof meta !== 'object' || Array.isArray(meta)) {
+              return;
+            }
+
+            globalModelMessageMeta[key] = {
+              created_by: String(meta.created_by || '').trim(),
+              created_at: String(meta.created_at || '').trim(),
+              updated_by: String(meta.updated_by || '').trim(),
+              updated_at: String(meta.updated_at || '').trim(),
+            };
+          });
+        }
+
+        const rawModelMap = globalSettings.MODEL_MESSAGE_MAP || {};
+        const rawModelAutomationMap = globalSettings.MODEL_AUTOMATION_MAP || {};
+        const modelAutomationMap = (rawModelAutomationMap && typeof rawModelAutomationMap === 'object' && !Array.isArray(rawModelAutomationMap))
+          ? rawModelAutomationMap
+          : {};
+        if (rawModelMap && typeof rawModelMap === 'object' && !Array.isArray(rawModelMap)) {
+          Object.keys(rawModelMap).forEach(modelKey => {
+            const cleanModel = String(modelKey || '').trim().replace(/^@+/, '');
+            const normalizedModelKey = normalizeModelKey(cleanModel);
+            const cleanMessages = Array.isArray(rawModelMap[modelKey])
+              ? rawModelMap[modelKey].map(x => String(x || '').trim()).filter(x => x)
+              : [];
+
+            if (cleanModel && cleanMessages.length) {
+              globalModelMessages.push({
+                model: cleanModel,
+                messages: cleanMessages,
+                automation_enabled: normalizeBooleanFlag(modelAutomationMap[normalizedModelKey], true),
+              });
+            }
+          });
+
+          globalModelMessages.sort((a, b) => a.model.localeCompare(b.model));
+        }
+
+        backfillModelMessageMetaFromActivity();
+
+        modelMessagesPage = 1;
+
+        for(let key in globalSettings) {
+          const el = document.getElementById('set_' + key);
+          if (el) {
+            let val = globalSettings[key];
+            if (el.type === 'checkbox') {
+              el.checked = normalizeBooleanFlag(val, false);
+            } else {
+              if ((key === 'TELEGRAM_CHAT_IDS' || key === 'LOCK_ALERT_CHAT_IDS' || key === 'DM_RANDOM_EMOJI_SUFFIX_POOL') && Array.isArray(val)) {
+                val = val.join(', ');
+              }
+              el.value = val;
+            }
+          }
+        }
+
+        initLikerAllToggle();
+
+
+        renderModelMessages();
+      } catch(e) {
+        console.error("Failed to load config", e);
+        showError(e.message || "Failed to load dashboard configuration");
+      }
+    }
+
+    // ── Accounts Logic ──
+    function normalizeAccountLabelGroup(rawLabel) {
+      const clean = String(rawLabel || '').trim().replace(/^@+/, '');
+      const key = clean.toLowerCase();
+      if (['', 'generic', 'any', 'all', '*', 'none'].includes(key)) {
+        return { key: 'generic', display: 'Generic', value: '' };
+      }
+      return { key, display: clean, value: clean };
+    }
+
+    function normalizeAccountRenderGroup(row) {
+      const isSuspended = normalizeBooleanFlag(row && row.is_suspended, false);
+      if (isSuspended) {
+        return {
+          key: SUSPENDED_ACCOUNTS_GROUP_KEY,
+          display: 'Suspended Accounts',
+          value: '',
+          is_suspended_group: true,
+        };
+      }
+
+      const labelMeta = normalizeAccountLabelGroup((row && row.model_label) || '');
+      return {
+        ...labelMeta,
+        is_suspended_group: false,
+      };
+    }
+
+    function getAccountsLabelAccordionState() {
+      if (!activeAccountsLabelAccordion || typeof activeAccountsLabelAccordion !== 'object' || Array.isArray(activeAccountsLabelAccordion)) {
+        activeAccountsLabelAccordion = {};
+      }
+      return activeAccountsLabelAccordion;
+    }
+
+    function isAccountLabelExpanded(labelKey) {
+      const key = normalizeAccountLabelGroup(labelKey).key;
+      const state = getAccountsLabelAccordionState();
+      return !!state[key];
+    }
+
+    function setAccountLabelExpanded(labelKey, expanded) {
+      const key = normalizeAccountLabelGroup(labelKey).key;
+      const state = getAccountsLabelAccordionState();
+      if (expanded) {
+        state[key] = true;
+      } else {
+        delete state[key];
+      }
+    }
+
+    function collectVisibleAccountIndexes() {
+      const visibleIndexes = [];
+      const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+      const employeeTabKey = activeAccountOwnerTab || myOwnerKey;
+      const accountSearch = normalizeSearchQuery(accountsSearchQuery);
+      const suspendedOnly = activeAccountsSidebarSection === 'suspended';
+      const hasAnySuspended = globalAccounts.some(acc => normalizeBooleanFlag(acc && acc.is_suspended, false));
+
+      globalAccounts.forEach((acc, idx) => {
+        const ownerKey = normalizeOwnerKey(acc.owner_username || 'master');
+        const usernameKey = String(acc.username || '').trim().toLowerCase();
+        const isSuspended = normalizeBooleanFlag(acc.is_suspended, false);
+
+        if (accountSearch && !usernameKey.includes(accountSearch)) {
+          return;
+        }
+
+        if (suspendedOnly && !isSuspended) {
+          return;
+        }
+
+        if (!suspendedOnly && isSuspended) {
+          return;
+        }
+
+        if (!globalIsMaster) {
+          if (ownerKey === employeeTabKey) {
+            visibleIndexes.push(idx);
+          }
+          return;
+        }
+
+        if (activeAccountOwnerTab === 'all' || ownerKey === activeAccountOwnerTab) {
+          visibleIndexes.push(idx);
+        }
+      });
+
+      const searchText = String(accountsSearchQuery || '').trim();
+      let emptyMessage = '';
+      if (suspendedOnly) {
+        emptyMessage = searchText
+          ? `No suspended accounts match username "${escapeHtml(searchText)}".`
+          : 'No suspended accounts yet.';
+      } else {
+        if (searchText) {
+          emptyMessage = `No active accounts match username "${escapeHtml(searchText)}".`;
+        } else if (hasAnySuspended) {
+          emptyMessage = 'No active accounts here. Open the Suspended section in sidebar to view suspended accounts.';
+        } else {
+          emptyMessage = (globalIsMaster && activeAccountOwnerTab !== 'all')
+            ? 'No accounts for this employee yet.'
+            : 'No accounts added yet.';
+        }
+      }
+
+      return { visibleIndexes, emptyMessage };
+    }
+
+    function renderAccountsTableHeader() {
+      return `
+        <thead>
+          <tr>
+            <th style="width: 84px;">Auto</th>
+            <th style="width: 84px;">Susp</th>
+            <th>Username</th>
+            <th>Password (Required)</th>
+            ${globalIsMaster ? '<th style="width: 140px;">Owner</th>' : ''}
+            <th style="width: 320px;">Proxy (Optional)</th>
+            <th style="width: 170px;">Bio + URL (Required)</th>
+            <th style="width: 170px;">Custom Messages</th>
+            <th style="width: 140px;">Cookies</th>
+            <th style="width: 100px;">Action</th>
+          </tr>
+        </thead>
+      `;
+    }
+
+    function renderAccountRowByIndex(i, myOwnerKey) {
+      const acc = globalAccounts[i];
+      const ownerKey = normalizeOwnerKey(acc.owner_username || 'master');
+      const isReadonlyQueue = !globalIsMaster && (!!acc.shared_readonly || ownerKey !== myOwnerKey);
+      const automationEnabled = acc.automation_enabled !== false;
+      const isSuspended = normalizeBooleanFlag(acc.is_suspended, false);
+      const effectiveAutomationEnabled = automationEnabled && !isSuspended;
+      const safeUser = escapeHtml(acc.username || '');
+      const safePass = escapeHtml(acc.password || '');
+      const rawProxy = String(acc.proxy || '').trim();
+      const safeProxy = escapeHtml(isReadonlyQueue ? '' : rawProxy);
+      const safeReadonlyProxy = escapeHtml(maskProxyListForDisplay(rawProxy));
+      const hasProxy = !isReadonlyQueue && rawProxy;
+      const rawProfileNote = String(acc.profile_note || '').trim();
+      const safeProfilePreview = escapeHtml(rawProfileNote || 'No preset');
+      const profilePreviewLabel = rawProfileNote ? `${Math.min(rawProfileNote.length, 120)} chars` : 'No preset';
+      const messageCount = Array.isArray(acc.custom_messages)
+        ? acc.custom_messages.filter(x => String(x || '').trim()).length
+        : 0;
+      const safeOwner = escapeHtml(acc.owner_username || globalCurrentUser.username || 'master');
+      const ownerCell = globalIsMaster
+        ? `<td><span class="badge" style="background:rgba(216,155,2,0.16); border:1px solid rgba(216,155,2,0.38); color:#f3c24d;">${safeOwner}</span></td>`
+        : '';
+
+      const automationTitle = isSuspended
+        ? 'Suspended accounts are always excluded from automation'
+        : (effectiveAutomationEnabled ? 'Automation enabled (click to disable)' : 'Automation disabled (click to enable)');
+
+      const automationCell = isReadonlyQueue
+        ? `<td><span class="automation-indicator-readonly ${effectiveAutomationEnabled ? '' : 'is-disabled'}" title="${effectiveAutomationEnabled ? 'Automation enabled' : 'Automation disabled'}"><i class="fas ${effectiveAutomationEnabled ? 'fa-eye' : 'fa-eye-slash'}"></i></span></td>`
+        : `<td><button class="automation-toggle ${effectiveAutomationEnabled ? '' : 'is-disabled'}" title="${automationTitle}" onclick="toggleAccountAutomation(${i})" ${isSuspended ? 'disabled' : ''}><i class="fas ${effectiveAutomationEnabled ? 'fa-eye' : 'fa-eye-slash'}"></i></button></td>`;
+
+      const suspensionTitle = isSuspended
+        ? 'Suspended (click to unsuspend and return to normal sections)'
+        : 'Active (click to move into Suspended Accounts)';
+
+      const suspensionCell = isReadonlyQueue
+        ? `<td><span class="suspension-indicator-readonly ${isSuspended ? 'is-suspended' : ''}" title="${isSuspended ? 'Suspended account' : 'Active account'}"><i class="fas ${isSuspended ? 'fa-ban' : 'fa-user'}"></i></span></td>`
+        : `<td><button class="automation-toggle suspension-toggle ${isSuspended ? 'is-disabled is-suspended' : ''}" title="${suspensionTitle}" aria-label="${suspensionTitle}" onclick="toggleAccountSuspended(${i})"><i class="fas ${isSuspended ? 'fa-ban' : 'fa-user'}"></i></button></td>`;
+
+      const proxyCell = isReadonlyQueue
+        ? `<td><span class="proxy-readonly" title="${safeReadonlyProxy || 'No proxy'}">${safeReadonlyProxy || '—'}</span></td>`
+        : `<td><textarea id="acc_proxy_${i}" class="proxy-input" rows="3" placeholder="proxy1, proxy2, ... (max 5)" style="${hasProxy ? ' border-color: rgba(216,155,2,0.6);' : ''}">${safeProxy}</textarea></td>`;
+
+      const userCell = isReadonlyQueue
+        ? `<td><span class="proxy-readonly" title="${safeUser || '—'}">${safeUser || '—'}</span></td>`
+        : `<td><input type="text" id="acc_user_${i}" value="${safeUser}"></td>`;
+
+      const passwordCell = isReadonlyQueue
+        ? `<td><span class="proxy-readonly" title="********">********</span></td>`
+        : `<td><div class="password-field-wrap"><input type="password" id="acc_pass_${i}" value="${safePass}" placeholder="Required password"><button class="btn btn-primary btn-sm password-visibility-btn" type="button" id="acc_pass_toggle_${i}" title="Show password" aria-label="Show password" onclick="toggleAccountPasswordVisibility(${i})"><i class="fas fa-eye"></i></button><button class="btn btn-primary btn-sm password-copy-btn" type="button" title="Copy password" aria-label="Copy password" onclick="copyAccountPassword(${i})"><i class="fas fa-copy"></i></button></div></td>`;
+
+      const profileCell = isReadonlyQueue
+        ? `<span class="proxy-readonly" title="${safeProfilePreview}">${safeProfilePreview || '—'}</span>`
+        : `<button class="btn btn-primary btn-sm" title="Edit Bio + URL Preset" onclick="openAccountProfileModalFromRow(${i})"><i class="fas fa-id-card"></i> Bio+URL (${profilePreviewLabel})</button>`;
+
+      const customMessagesCell = isReadonlyQueue
+        ? `<span class="badge" style="background:rgba(216,155,2,0.12); border:1px solid rgba(216,155,2,0.3); color:#f3c24d;">${messageCount} msgs</span>`
+        : `<button class="btn btn-primary btn-sm" title="Edit Custom Messages" onclick="openAccountMessageModalFromRow(${i})"><i class="fas fa-comment-dots"></i> Messages (${messageCount})</button>`;
+
+      const cookiesCell = isReadonlyQueue
+        ? `<span class="badge" style="background:rgba(216,155,2,0.12); border:1px solid rgba(216,155,2,0.3); color:#f3c24d;">Queue</span>`
+        : `<button class="btn btn-primary btn-sm" title="Edit Cookies" onclick="openCookieModalFromRow(${i})"><i class="fas fa-cookie-bite"></i> Cookies</button>`;
+
+      const actionCell = isReadonlyQueue
+        ? `<span style="font-size:0.8rem; color: var(--text-muted);">Read-only</span>`
+        : `<button class="btn btn-danger btn-sm" title="Delete Account" onclick="removeAccount(${i})"><i class="fas fa-trash"></i></button>`;
+
+      const rowStyle = isReadonlyQueue
+        ? 'opacity:0.82;'
+        : (isSuspended
+            ? 'opacity:0.64; background: rgba(224, 62, 62, 0.08);'
+            : (!automationEnabled ? 'opacity:0.72;' : ''));
+
+      return `
+        <tr style="${rowStyle}">
+          ${automationCell}
+          ${suspensionCell}
+          ${userCell}
+          ${passwordCell}
+          ${ownerCell}
+          ${proxyCell}
+          <td>${profileCell}</td>
+          <td>${customMessagesCell}</td>
+          <td>${cookiesCell}</td>
+          <td><div class="accounts-actions">${actionCell}</div></td>
+        </tr>
+      `;
+    }
+
+    function toggleAccountsLabelAccordion(labelKey) {
+      syncAccountsFromDom();
+      const normalized = normalizeAccountLabelGroup(labelKey).key;
+      setAccountLabelExpanded(normalized, !isAccountLabelExpanded(normalized));
+      renderAccounts();
+    }
+
+    function renderAccounts() {
+      const tbody = document.querySelector('#accountsTable tbody');
+      if (tbody) {
+        tbody.innerHTML = '';
+      }
+
+      const flatWrap = document.getElementById('accountsFlatTableWrap');
+      if (flatWrap) {
+        flatWrap.style.display = 'none';
+      }
+
+      const pagination = document.getElementById('accountsPagination');
+      if (pagination) {
+        pagination.style.display = 'none';
+        pagination.innerHTML = '';
+      }
+
+      const accordionRoot = document.getElementById('accountsLabelAccordion');
+      if (!accordionRoot) {
+        return;
+      }
+
+      const { visibleIndexes, emptyMessage } = collectVisibleAccountIndexes();
+      const groupsByKey = {};
+      visibleIndexes.forEach(idx => {
+        const row = globalAccounts[idx] || {};
+        const labelMeta = normalizeAccountRenderGroup(row);
+        if (!groupsByKey[labelMeta.key]) {
+          groupsByKey[labelMeta.key] = {
+            key: labelMeta.key,
+            display: labelMeta.display,
+            value: labelMeta.value,
+            indexes: [],
+          };
+        }
+        groupsByKey[labelMeta.key].indexes.push(idx);
+      });
+
+      const activeScope = getActiveLabelScope();
+      (globalAccountLabelDrafts || []).forEach(draft => {
+        const key = String(draft && draft.key || '').trim().toLowerCase();
+        if (!key) {
+          return;
+        }
+
+        const draftScope = String(draft && draft.scope || 'all').trim().toLowerCase() || 'all';
+        if (!globalIsMaster) {
+          if (draftScope !== activeScope) {
+            return;
+          }
+        } else {
+          if (activeScope === 'all') {
+            if (draftScope !== 'all') {
+              return;
+            }
+          } else if (draftScope !== 'all' && draftScope !== activeScope) {
+            return;
+          }
+        }
+
+        if (!groupsByKey[key]) {
+          groupsByKey[key] = {
+            key,
+            display: String(draft.display || draft.value || key).trim() || key,
+            value: String(draft.value || draft.display || key).trim() || key,
+            indexes: [],
+          };
+        }
+      });
+
+      if (!Object.keys(groupsByKey).length) {
+        accordionRoot.innerHTML = `<div class="label-accordion-empty">${emptyMessage}</div>`;
+        return;
+      }
+
+      const groups = Object.values(groupsByKey).sort((a, b) => {
+        if (a.key === SUSPENDED_ACCOUNTS_GROUP_KEY && b.key !== SUSPENDED_ACCOUNTS_GROUP_KEY) return -1;
+        if (a.key !== SUSPENDED_ACCOUNTS_GROUP_KEY && b.key === SUSPENDED_ACCOUNTS_GROUP_KEY) return 1;
+        if (a.key === 'generic' && b.key !== 'generic') return 1;
+        if (a.key !== 'generic' && b.key === 'generic') return -1;
+        return String(a.display || '').toLowerCase().localeCompare(String(b.display || '').toLowerCase());
+      });
+
+      const accordionState = getAccountsLabelAccordionState();
+      const hadExpanded = Object.keys(accordionState).length > 0;
+      const validGroupKeys = new Set(groups.map(group => group.key));
+      const nextAccordionState = {};
+      Object.keys(accordionState).forEach(key => {
+        if (validGroupKeys.has(key) && accordionState[key]) {
+          nextAccordionState[key] = true;
+        }
+      });
+      if (hadExpanded && !Object.keys(nextAccordionState).length && groups.length) {
+        nextAccordionState[groups[0].key] = true;
+      }
+      activeAccountsLabelAccordion = nextAccordionState;
+
+      const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+      const headerHtml = renderAccountsTableHeader();
+
+      accordionRoot.innerHTML = groups.map(group => {
+        const isSuspendedGroup = group.key === SUSPENDED_ACCOUNTS_GROUP_KEY;
+        const expanded = !!activeAccountsLabelAccordion[group.key];
+        const encodedKey = encodeURIComponent(group.key);
+        const encodedLabel = encodeURIComponent(group.value || '');
+        const encodedDisplay = encodeURIComponent(group.display || '');
+        const editableLabelIndexes = group.indexes.filter(idx => {
+          const row = globalAccounts[idx] || null;
+          if (!row) {
+            return false;
+          }
+          if (globalIsMaster) {
+            return true;
+          }
+          const rowOwnerKey = normalizeOwnerKey(row.owner_username || 'master');
+          return !row.shared_readonly && rowOwnerKey === myOwnerKey;
+        });
+        const hasEditableLabelAccounts = editableLabelIndexes.length > 0;
+        const allLabelAutomationEnabled = hasEditableLabelAccounts
+          && editableLabelIndexes.every(idx => globalAccounts[idx].automation_enabled !== false);
+        const labelAutomationTitle = isSuspendedGroup
+          ? 'Suspended accounts are always automation-disabled'
+          : (hasEditableLabelAccounts
+              ? (allLabelAutomationEnabled
+                  ? 'Disable automation for all accounts in this label'
+                  : 'Enable automation for all accounts in this label')
+              : 'No editable accounts in this label');
+        const labelAutomationControl = isSuspendedGroup
+          ? `<span class="automation-indicator-readonly is-disabled" title="${labelAutomationTitle}"><i class="fas fa-eye-slash"></i></span>`
+          : `<button class="automation-toggle label-automation-toggle ${allLabelAutomationEnabled ? '' : 'is-disabled'}" type="button" title="${labelAutomationTitle}" aria-label="${labelAutomationTitle}" onclick="toggleLabelAutomationByKey(decodeURIComponent('${encodedKey}'))" ${hasEditableLabelAccounts ? '' : 'disabled'}><i class="fas ${allLabelAutomationEnabled ? 'fa-eye' : 'fa-eye-slash'}"></i></button>`;
+        const editLabelControl = isSuspendedGroup
+          ? ''
+          : `<span class="label-title-edit" title="Edit label name" onclick="event.stopPropagation(); openEditLabelModal(decodeURIComponent('${encodedKey}'), decodeURIComponent('${encodedDisplay}'));"><i class="fas fa-pen" style="margin-right:0.3rem;"></i>Edit</span>`;
+        const addAccountControl = isSuspendedGroup
+          ? ''
+          : `<button class="btn btn-primary btn-sm" type="button" onclick="addAccountRowByLabel(decodeURIComponent('${encodedLabel}'))"><i class="fas fa-plus"></i> Add Account</button>`;
+        const groupMetaText = isSuspendedGroup
+          ? `(${group.indexes.length}) Suspended IG Accounts`
+          : `(${group.indexes.length}) IG Accounts Alive`;
+        const rowsHtml = group.indexes.length
+          ? group.indexes.map(idx => renderAccountRowByIndex(idx, myOwnerKey)).join('')
+          : `<tr><td colspan="${globalIsMaster ? 10 : 9}" style="color: var(--text-muted); font-size:0.84rem;">No accounts in this label yet. Use Add Account to create one.</td></tr>`;
+
+        return `
+          <div class="label-accordion-item ${expanded ? 'is-open' : ''}">
+            <button type="button" class="label-accordion-header" onclick="toggleAccountsLabelAccordion(decodeURIComponent('${encodedKey}'))">
+              <span class="label-accordion-title">${escapeHtml(group.display)} ${editLabelControl}</span>
+              <span class="label-accordion-meta">${groupMetaText}</span>
+              <i class="fas fa-chevron-down label-accordion-chevron"></i>
+            </button>
+            <div class="label-accordion-body">
+              <div class="label-accordion-actions">
+                ${labelAutomationControl}
+                ${addAccountControl}
+              </div>
+              <div class="table-wrap">
+                <table class="accounts-group-table">
+                  ${headerHtml}
+                  <tbody>
+                    ${rowsHtml}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function addAccountRowByLabel(labelValue) {
+      addAccountRow(labelValue);
+    }
+    
+    function addAccountRow(defaultModelLabel = '') {
+      // Sync current DOM values back to array first
+      syncAccountsFromDom();
+
+      if (!globalIsMaster) {
+        activeAccountOwnerTab = normalizeOwnerKey(globalCurrentUser.username || '');
+      }
+
+      const defaultOwner = globalIsMaster && activeAccountOwnerTab !== 'all'
+        ? normalizeOwnerKey(activeAccountOwnerTab)
+        : (globalCurrentUser.username || 'master');
+
+      const labelMeta = normalizeAccountLabelGroup(defaultModelLabel || '');
+      const activeScope = getActiveLabelScope();
+      globalAccountLabelDrafts = (globalAccountLabelDrafts || []).filter(item => {
+        return !(String(item && item.key || '').trim().toLowerCase() === labelMeta.key
+          && String(item && item.scope || '').trim().toLowerCase() === activeScope);
+      });
+
+      globalAccounts.push({
+        username: "",
+        password: "",
+        model_label: labelMeta.value,
+        proxy: "",
+        profile_note: "",
+        custom_messages: [],
+        automation_enabled: true,
+        is_suspended: false,
+        owner_username: defaultOwner,
+        cookies_raw: '',
+        cookies_touched: false,
+        shared_readonly: false,
+      });
+      setAccountLabelExpanded(labelMeta.key, true);
+      buildAccountsOwnerTabs();
+      renderAccountsOwnerTabs();
+      renderAccounts();
+    }
+    
+    function removeAccount(idx) {
+      syncAccountsFromDom();
+      const row = globalAccounts[idx] || null;
+      const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+      const rowOwnerKey = normalizeOwnerKey(row ? row.owner_username : 'master');
+      if (!globalIsMaster && row && (row.shared_readonly || rowOwnerKey !== myOwnerKey)) {
+        showError('Other employee accounts are read-only');
+        return;
+      }
+      globalAccounts.splice(idx, 1);
+      buildAccountsOwnerTabs();
+      renderAccountsOwnerTabs();
+      renderAccounts();
+    }
+
+    function toggleAccountAutomation(idx) {
+      syncAccountsFromDom();
+      const row = globalAccounts[idx] || null;
+      if (!row) {
+        return;
+      }
+
+      const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+      const rowOwnerKey = normalizeOwnerKey(row.owner_username || 'master');
+      if (!globalIsMaster && (row.shared_readonly || rowOwnerKey !== myOwnerKey)) {
+        showError('Other employee accounts are read-only');
+        return;
+      }
+
+      if (normalizeBooleanFlag(row.is_suspended, false)) {
+        showError('Account is suspended. Unsuspend it first to change automation.');
+        return;
+      }
+
+      row.automation_enabled = !(row.automation_enabled !== false);
+      renderAccounts();
+      const stateLabel = row.automation_enabled !== false ? 'enabled' : 'disabled';
+      const displayUser = String(row.username || '').trim() || `row ${idx + 1}`;
+      showToast(`Automation ${stateLabel} for ${displayUser}. Click Save Accounts to apply.`);
+    }
+
+    function toggleAccountSuspended(idx) {
+      syncAccountsFromDom();
+      const row = globalAccounts[idx] || null;
+      if (!row) {
+        return;
+      }
+
+      const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+      const rowOwnerKey = normalizeOwnerKey(row.owner_username || 'master');
+      if (!globalIsMaster && (row.shared_readonly || rowOwnerKey !== myOwnerKey)) {
+        showError('Other employee accounts are read-only');
+        return;
+      }
+
+      const nextSuspended = !normalizeBooleanFlag(row.is_suspended, false);
+      row.is_suspended = nextSuspended;
+      if (nextSuspended) {
+        row.automation_enabled = false;
+      }
+
+      renderAccounts();
+      const displayUser = String(row.username || '').trim() || `row ${idx + 1}`;
+      if (nextSuspended) {
+        showToast(`${displayUser} moved to Suspended Accounts. Click Save Accounts to apply.`);
+      } else {
+        showToast(`${displayUser} removed from Suspended Accounts. Re-enable automation if needed, then Save Accounts.`);
+      }
+    }
+
+    function toggleLabelAutomationByKey(labelKey) {
+      syncAccountsFromDom();
+      const normalizedGroupKey = String(labelKey || '').trim().toLowerCase();
+      if (normalizedGroupKey === SUSPENDED_ACCOUNTS_GROUP_KEY) {
+        showError('Suspended accounts remain blocked. Unsuspend individual accounts to reactivate them.');
+        return;
+      }
+      const labelMeta = normalizeAccountLabelGroup(labelKey || '');
+      const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+      const { visibleIndexes } = collectVisibleAccountIndexes();
+
+      const labelIndexes = visibleIndexes.filter(idx => {
+        const row = globalAccounts[idx] || {};
+        return normalizeAccountRenderGroup(row).key === labelMeta.key;
+      });
+
+      if (!labelIndexes.length) {
+        showError('No accounts found under this label in the current view.');
+        return;
+      }
+
+      const editableIndexes = labelIndexes.filter(idx => {
+        const row = globalAccounts[idx] || null;
+        if (!row) {
+          return false;
+        }
+        if (globalIsMaster) {
+          return true;
+        }
+        const rowOwnerKey = normalizeOwnerKey(row.owner_username || 'master');
+        return !row.shared_readonly && rowOwnerKey === myOwnerKey;
+      });
+
+      if (!editableIndexes.length) {
+        showError('No editable accounts under this label in the current view.');
+        return;
+      }
+
+      const hasDisabled = editableIndexes.some(idx => globalAccounts[idx].automation_enabled === false);
+      const nextEnabled = hasDisabled;
+
+      editableIndexes.forEach(idx => {
+        const row = globalAccounts[idx] || {};
+        if (normalizeBooleanFlag(row.is_suspended, false) && nextEnabled) {
+          row.automation_enabled = false;
+          return;
+        }
+        row.automation_enabled = nextEnabled;
+      });
+
+      renderAccounts();
+
+      const stateLabel = nextEnabled ? 'enabled' : 'disabled';
+      showToast(`Automation ${stateLabel} for ${editableIndexes.length} account(s) in ${labelMeta.display}. Click Save Accounts to apply.`);
+    }
+    
+    function syncAccountsFromDom() {
+      globalAccounts.forEach((acc, i) => {
+        const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+        const ownerKey = normalizeOwnerKey(acc.owner_username || 'master');
+        if (!globalIsMaster && (acc.shared_readonly || ownerKey !== myOwnerKey)) {
+          return;
+        }
+
+        const u = document.getElementById(`acc_user_${i}`);
+        const p = document.getElementById(`acc_pass_${i}`);
+        const pr = document.getElementById(`acc_proxy_${i}`);
+        if(u) acc.username = u.value;
+        if(p) acc.password = p.value;
+        if(pr) acc.proxy = pr.value.trim();
+        if (!Array.isArray(acc.custom_messages)) {
+          acc.custom_messages = [];
+        }
+        if (typeof acc.is_suspended !== 'boolean') {
+          acc.is_suspended = false;
+        }
+        if (typeof acc.automation_enabled !== 'boolean') {
+          acc.automation_enabled = true;
+        }
+        if (acc.is_suspended) {
+          acc.automation_enabled = false;
+        }
+        acc.owner_username = acc.owner_username || globalCurrentUser.username || 'master';
+      });
+    }
+
+    async function saveAccounts() {
+      syncAccountsFromDom();
+      // Remove empty rows, then enforce required password for each saved account.
+      const editableAccounts = globalIsMaster
+        ? globalAccounts
+        : globalAccounts.filter(a => {
+            const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+            const ownerKey = normalizeOwnerKey(a.owner_username || 'master');
+            return !a.shared_readonly && ownerKey === myOwnerKey;
+          });
+
+      const cleanAccs = editableAccounts
+        .filter(a => a.username.trim() !== "")
+        .map(a => {
+          const proxyNormalized = normalizeProxyInputForSave(a.proxy, MAX_PROXIES_PER_ACCOUNT);
+          const isSuspended = normalizeBooleanFlag(a.is_suspended, false);
+          return {
+            username: a.username.trim(),
+            password: String(a.password || '').trim(),
+            model_label: String(a.model_label || '').trim(),
+            proxy: proxyNormalized.proxies.join(', '),
+            profile_note: String(a.profile_note || '').trim(),
+            proxy_overflow: proxyNormalized.overflow,
+            custom_messages: Array.isArray(a.custom_messages)
+              ? a.custom_messages.map(x => String(x || '').trim()).filter(x => x)
+              : [],
+            automation_enabled: isSuspended ? false : (a.automation_enabled !== false),
+            is_suspended: isSuspended,
+            owner_username: a.owner_username || globalCurrentUser.username || 'master',
+            cookies_raw: a.cookies_raw || '',
+            cookies_touched: !!a.cookies_touched,
+          };
+        });
+
+      const overflowProxyUsers = cleanAccs
+        .filter(a => Number(a.proxy_overflow || 0) > 0)
+        .map(a => a.username || '(unknown)');
+
+      if (overflowProxyUsers.length) {
+        showError(`Maximum ${MAX_PROXIES_PER_ACCOUNT} proxies per account. Fix: ${overflowProxyUsers.join(', ')}`);
+        return;
+      }
+
+      const missingPasswordUsers = cleanAccs
+        .filter(a => !a.password)
+        .map(a => a.username);
+
+      if (missingPasswordUsers.length) {
+        showError(`Password is required for: ${missingPasswordUsers.join(', ')}`);
+        return;
+      }
+
+      const missingProfileUsers = cleanAccs
+        .filter(a => !String(a.profile_note || '').trim())
+        .map(a => a.username);
+
+      if (missingProfileUsers.length) {
+        showError(`Bio + URL preset is required for: ${missingProfileUsers.join(', ')}`);
+        return;
+      }
+
+      const accountsPayload = cleanAccs.map(a => ({
+        username: a.username,
+        password: a.password,
+        model_label: a.model_label,
+        proxy: a.proxy,
+        profile_note: a.profile_note,
+        custom_messages: a.custom_messages,
+        automation_enabled: a.automation_enabled !== false,
+        is_suspended: a.is_suspended === true,
+        owner_username: a.owner_username,
+      }));
+
+      try {
+        await apiJson('/api/config/accounts', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(accountsPayload)
+        });
+
+        const cookieFailures = [];
+        for (const acc of cleanAccs) {
+          if (!acc.cookies_touched) continue;
+          try {
+            await apiJson(`/api/cookies/${encodeURIComponent(acc.username)}`, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ cookies: acc.cookies_raw || '' })
+            });
+          } catch (e) {
+            cookieFailures.push(`${acc.username}: ${e.message || 'save failed'}`);
+          }
+        }
+
+        await loadConfig();
+
+        if (cookieFailures.length) {
+          showError(`Accounts saved, but some cookies failed:\n${cookieFailures.join('\n')}`);
+        } else {
+          showToast("Accounts and cookies saved successfully!");
+        }
+      } catch (e) {
+        showError(e.message || 'Failed to save accounts');
+      }
+    }
+
+    function renderUsers() {
+      const tbody = document.querySelector('#usersTable tbody');
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+      if (!globalIsMaster) {
+        return;
+      }
+
+      if (!globalUsers.length) {
+        tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted); font-size:0.85rem;">No dashboard users yet.</td></tr>';
+        return;
+      }
+
+      globalUsers.forEach(user => {
+        const safeUser = escapeHtml(user.username || '');
+        const safeRole = escapeHtml((user.role || 'employee').toUpperCase());
+        const encodedUser = encodeURIComponent(user.username || '');
+        const isMasterRow = (user.role || '').toLowerCase() === 'master';
+
+        const actions = isMasterRow
+          ? `
+              <button class="btn btn-primary btn-sm" onclick="editDashboardUser(decodeURIComponent('${encodedUser}'))"><i class="fas fa-user-pen"></i> Edit</button>
+              <span style="color: var(--text-muted); font-size:0.8rem;">Primary account</span>
+            `
+          : `
+              <button class="btn btn-primary btn-sm" onclick="editDashboardUser(decodeURIComponent('${encodedUser}'))"><i class="fas fa-user-pen"></i> Edit</button>
+              <button class="btn btn-primary btn-sm" onclick="resetEmployeePassword(decodeURIComponent('${encodedUser}'))"><i class="fas fa-key"></i> Reset</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteEmployeeUser(decodeURIComponent('${encodedUser}'))"><i class="fas fa-trash"></i></button>
+            `;
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${safeUser}</td>
+            <td><span class="badge" style="background:rgba(216,155,2,0.16); border:1px solid rgba(216,155,2,0.38); color:#f3c24d;">${safeRole}</span></td>
+            <td style="display:flex; gap:0.5rem;">${actions}</td>
+          </tr>
+        `;
+      });
+    }
+
+    async function createEmployeeUser() {
+      if (!globalIsMaster) return;
+
+      const usernameEl = document.getElementById('newEmployeeUsername');
+      const passwordEl = document.getElementById('newEmployeePassword');
+      const username = (usernameEl.value || '').trim();
+      const password = passwordEl.value || '';
+
+      if (!username) {
+        showError('Employee username is required');
+        return;
+      }
+
+      try {
+        await apiJson('/api/users', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({username, password, role: 'employee'})
+        });
+
+        usernameEl.value = '';
+        passwordEl.value = '';
+        await loadConfig();
+        showToast(`Employee ${username} created`);
+      } catch (e) {
+        showError(e.message || 'Failed to create employee user');
+      }
+    }
+
+    function resetEmployeePassword(username) {
+      if (!globalIsMaster) return;
+
+      activeResetPasswordUser = username;
+      const titleEl = document.getElementById('resetPasswordModalTitle');
+      if (titleEl) titleEl.innerText = `Reset Password: ${username}`;
+      document.getElementById('resetPasswordInput').value = '';
+      document.getElementById('resetPasswordConfirmInput').value = '';
+      document.getElementById('resetPasswordModalOverlay').classList.add('show');
+    }
+
+    function closeResetPasswordModal() {
+      document.getElementById('resetPasswordModalOverlay').classList.remove('show');
+      activeResetPasswordUser = '';
+    }
+
+    async function saveResetPasswordModal() {
+      if (!globalIsMaster || !activeResetPasswordUser) return;
+
+      const newPassword = document.getElementById('resetPasswordInput').value || '';
+      const confirmPassword = document.getElementById('resetPasswordConfirmInput').value || '';
+
+      if (!newPassword || newPassword.length < 4) {
+        showError('Password must be at least 4 characters');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        showError('Password and confirm password do not match');
+        return;
+      }
+
+      try {
+        await apiJson(`/api/users/${encodeURIComponent(activeResetPasswordUser)}/password`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({password: newPassword})
+        });
+
+        const doneFor = activeResetPasswordUser;
+        closeResetPasswordModal();
+        showToast(`Password updated for ${doneFor}`);
+      } catch (e) {
+        showError(e.message || 'Failed to update password');
+      }
+    }
+
+    function editDashboardUser(username) {
+      if (!globalIsMaster) return;
+      activeEditUser = username;
+
+      const title = document.getElementById('userEditModalTitle');
+      const current = document.getElementById('userEditCurrentUsername');
+      const newUser = document.getElementById('userEditNewUsername');
+      const newPass = document.getElementById('userEditNewPassword');
+      const confirmPass = document.getElementById('userEditConfirmPassword');
+
+      if (title) title.innerText = `Edit Dashboard User: ${username}`;
+      if (current) current.value = username;
+      if (newUser) newUser.value = username;
+      if (newPass) newPass.value = '';
+      if (confirmPass) confirmPass.value = '';
+
+      document.getElementById('userEditModalOverlay').classList.add('show');
+    }
+
+    function closeUserEditModal() {
+      document.getElementById('userEditModalOverlay').classList.remove('show');
+      activeEditUser = '';
+    }
+
+    async function saveUserEditModal() {
+      if (!globalIsMaster || !activeEditUser) return;
+
+      const oldUsername = activeEditUser;
+      const newUsername = (document.getElementById('userEditNewUsername').value || '').trim();
+      const newPassword = document.getElementById('userEditNewPassword').value || '';
+      const confirmPassword = document.getElementById('userEditConfirmPassword').value || '';
+
+      if (!newUsername) {
+        showError('Username cannot be empty');
+        return;
+      }
+
+      if (newPassword && newPassword.length < 4) {
+        showError('Password must be at least 4 characters');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        showError('New password and confirm password do not match');
+        return;
+      }
+
+      try {
+        await apiJson(`/api/users/${encodeURIComponent(activeEditUser)}/update`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            username: newUsername,
+            password: newPassword,
+          })
+        });
+
+        closeUserEditModal();
+        await loadConfig();
+        showToast(`User ${oldUsername} updated`);
+      } catch (e) {
+        showError(e.message || 'Failed to update user');
+      }
+    }
+
+    async function deleteEmployeeUser(username) {
+      if (!globalIsMaster) return;
+      const ok = await confirmModal(`Delete dashboard user ${username}?`, 'Delete User', 'Delete');
+      if (!ok) return;
+
+      try {
+        await apiJson(`/api/users/${encodeURIComponent(username)}`, {
+          method: 'DELETE'
+        });
+        await loadConfig();
+        showToast(`User ${username} deleted`);
+      } catch (e) {
+        showError(e.message || 'Failed to delete user');
+      }
+    }
+
+    // ── Targets Logic ──
+    async function saveModels() {
+      const modelsTextarea = document.getElementById('modelsTextarea');
+      const text = modelsTextarea ? modelsTextarea.value : globalModels.join('\n');
+      const list = text.split('\n').map(x => x.trim()).filter(x => x);
+      try {
+        await apiJson('/api/config/models', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(list)
+        });
+        globalModels = list;
+        renderModelsDatalist();
+        showToast("Models List Saved successfully!");
+      } catch (e) {
+        showError(e.message || 'Failed to save models');
+      }
+    }
+    
+
+
+    function renderModelMessages() {
+      const tbody = document.querySelector('#modelMessagesTable tbody');
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+      const showMetaCol = globalIsMaster;
+      const canEditRows = canManageTargets();
+      const columnCount = showMetaCol ? 5 : 4;
+      const messageSearch = normalizeSearchQuery(modelMessagesSearchQuery);
+
+      if (!globalModelMessages.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="${columnCount}" style="color: var(--text-muted); font-size: 0.85rem;">
+              No model-specific sets yet. Add at least one model and message set.
+            </td>
+          </tr>
+        `;
+        modelMessagesPage = 1;
+        renderPagination('modelMessagesPagination', 1, 1, 0, 'setModelMessagesPage', MODEL_MESSAGES_PAGE_SIZE);
+        return;
+      }
+
+      const visibleIndexes = [];
+      globalModelMessages.forEach((entry, idx) => {
+        const modelName = String(entry.model || '').trim().replace(/^@+/, '').toLowerCase();
+        if (messageSearch && !modelName.includes(messageSearch)) {
+          return;
+        }
+        visibleIndexes.push(idx);
+      });
+
+      if (!visibleIndexes.length) {
+        const searchText = String(modelMessagesSearchQuery || '').trim();
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="${columnCount}" style="color: var(--text-muted); font-size: 0.85rem;">
+              No target message sets match username "${escapeHtml(searchText)}".
+            </td>
+          </tr>
+        `;
+        modelMessagesPage = 1;
+        renderPagination('modelMessagesPagination', 1, 1, 0, 'setModelMessagesPage', MODEL_MESSAGES_PAGE_SIZE);
+        return;
+      }
+
+      const totalRows = visibleIndexes.length;
+      const totalPages = Math.max(1, Math.ceil(totalRows / MODEL_MESSAGES_PAGE_SIZE));
+      modelMessagesPage = clampPageNumber(modelMessagesPage, totalPages);
+      const startOffset = (modelMessagesPage - 1) * MODEL_MESSAGES_PAGE_SIZE;
+      const pageIndexes = visibleIndexes.slice(startOffset, startOffset + MODEL_MESSAGES_PAGE_SIZE);
+
+      pageIndexes.forEach((i) => {
+        const entry = globalModelMessages[i];
+        const automationEnabled = entry.automation_enabled !== false;
+        const safeModel = escapeHtml(entry.model || '');
+        const safeMessages = escapeHtml((entry.messages || []).join('\n'));
+        const safeMeta = escapeHtml(formatModelMessageMeta(entry.model || ''));
+        const rowStyle = automationEnabled ? '' : 'opacity:0.72;';
+        const automationCell = canEditRows
+          ? `<button class="automation-toggle ${automationEnabled ? '' : 'is-disabled'}" title="${automationEnabled ? 'Automation enabled (click to disable)' : 'Automation disabled (click to enable)'}" onclick="toggleModelAutomation(${i})"><i class="fas ${automationEnabled ? 'fa-eye' : 'fa-eye-slash'}"></i></button>`
+          : `<span class="automation-indicator-readonly ${automationEnabled ? '' : 'is-disabled'}" title="${automationEnabled ? 'Automation enabled' : 'Automation disabled'}"><i class="fas ${automationEnabled ? 'fa-eye' : 'fa-eye-slash'}"></i></span>`;
+        tbody.innerHTML += `
+          <tr style="${rowStyle}">
+            <td>
+              <input type="text" id="mm_model_${i}" list="modelsDatalist" value="${safeModel}" placeholder="alice">
+            </td>
+            <td>
+              <textarea id="mm_msgs_${i}" rows="4" placeholder="One line per message">${safeMessages}</textarea>
+            </td>
+            ${showMetaCol ? `<td style="font-size: 0.82rem; color: var(--text-muted);">${safeMeta}</td>` : ''}
+            <td>${automationCell}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" title="Delete Set" onclick="removeModelMessageRow(${i})"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+
+      renderPagination('modelMessagesPagination', modelMessagesPage, totalPages, totalRows, 'setModelMessagesPage', MODEL_MESSAGES_PAGE_SIZE);
+    }
+
+    function setModelMessagesPage(nextPage) {
+      syncModelMessagesFromDom();
+      modelMessagesPage = Number(nextPage) || 1;
+      renderModelMessages();
+    }
+
+    function syncModelMessagesFromDom() {
+      globalModelMessages.forEach((entry, i) => {
+        const modelInput = document.getElementById(`mm_model_${i}`);
+        const msgInput = document.getElementById(`mm_msgs_${i}`);
+        if (modelInput) entry.model = modelInput.value;
+        if (msgInput) entry.messages = parseMessageLines(msgInput.value);
+        if (typeof entry.automation_enabled !== 'boolean') {
+          entry.automation_enabled = true;
+        }
+      });
+    }
+
+    function addModelMessageRow() {
+      if (!canManageTargets()) {
+        showError('You do not have permission to edit targets and messages');
+        return;
+      }
+
+      syncModelMessagesFromDom();
+      globalModelMessages.push({ model: '', messages: [], automation_enabled: true });
+      modelMessagesPage = Number.MAX_SAFE_INTEGER;
+      renderModelMessages();
+    }
+
+    function toggleModelAutomation(idx) {
+      if (!canManageTargets()) {
+        showError('You do not have permission to edit targets and messages');
+        return;
+      }
+
+      syncModelMessagesFromDom();
+      const row = globalModelMessages[idx] || null;
+      if (!row) {
+        return;
+      }
+
+      row.automation_enabled = !(row.automation_enabled !== false);
+      renderModelMessages();
+
+      const stateLabel = row.automation_enabled !== false ? 'enabled' : 'disabled';
+      const displayModel = String(row.model || '').trim() || `row ${idx + 1}`;
+      showToast(`Target automation ${stateLabel} for ${displayModel}. Click Save Targets & Messages to apply.`);
+    }
+
+    function removeModelMessageRow(idx) {
+      if (!canManageTargets()) {
+        showError('You do not have permission to edit targets and messages');
+        return;
+      }
+
+      syncModelMessagesFromDom();
+      globalModelMessages.splice(idx, 1);
+      renderModelMessages();
+    }
+
+    async function saveModelMessages() {
+      if (!canManageTargets()) {
+        showError('You do not have permission to save targets and messages');
+        return;
+      }
+
+      syncModelMessagesFromDom();
+
+      const normalizedRows = [];
+      const modelMessageMap = {};
+      const modelAutomationMap = {};
+
+      globalModelMessages.forEach(entry => {
+        const cleanModel = String(entry.model || '').trim().replace(/^@+/, '');
+        const cleanMessages = Array.isArray(entry.messages)
+          ? entry.messages.map(x => String(x || '').trim()).filter(x => x)
+          : [];
+        const modelKey = normalizeModelKey(cleanModel);
+
+        if (!modelKey || !cleanMessages.length) {
+          return;
+        }
+
+        const automationEnabled = entry.automation_enabled !== false;
+        normalizedRows.push({
+          model: cleanModel,
+          messages: cleanMessages,
+          automation_enabled: automationEnabled,
+        });
+        modelMessageMap[modelKey] = cleanMessages;
+        modelAutomationMap[modelKey] = automationEnabled;
+      });
+
+      globalModelMessages = normalizedRows;
+      const derivedModels = Array.from(new Set(
+        normalizedRows
+          .map(entry => String(entry.model || '').trim().replace(/^@+/, ''))
+          .filter(Boolean)
+      ));
+      globalModels = derivedModels;
+      const nextModelMeta = {};
+      Object.keys(modelMessageMap).forEach(modelKey => {
+        const prevMeta = globalModelMessageMeta[modelKey];
+        if (prevMeta && typeof prevMeta === 'object' && !Array.isArray(prevMeta)) {
+          nextModelMeta[modelKey] = {...prevMeta};
+        }
+      });
+      globalModelMessageMeta = nextModelMeta;
+      globalSettings.MODEL_MESSAGE_MAP = modelMessageMap;
+      globalSettings.MODEL_MESSAGE_META = globalModelMessageMeta;
+      globalSettings.MODEL_AUTOMATION_MAP = modelAutomationMap;
+
+      try {
+        await apiJson('/api/config/models', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(derivedModels)
+        });
+
+        const mapResponse = await apiJson('/api/config/model_message_map', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            model_message_map: modelMessageMap,
+            model_automation_map: modelAutomationMap,
+          })
+        });
+
+        const responseMeta = mapResponse.model_message_meta;
+        if (responseMeta && typeof responseMeta === 'object' && !Array.isArray(responseMeta)) {
+          const cleanMeta = {};
+          Object.keys(responseMeta).forEach(modelKey => {
+            const key = normalizeModelKey(modelKey);
+            if (!key) {
+              return;
+            }
+            const meta = responseMeta[modelKey];
+            if (!meta || typeof meta !== 'object' || Array.isArray(meta)) {
+              return;
+            }
+            cleanMeta[key] = {
+              created_by: String(meta.created_by || '').trim(),
+              created_at: String(meta.created_at || '').trim(),
+              updated_by: String(meta.updated_by || '').trim(),
+              updated_at: String(meta.updated_at || '').trim(),
+            };
+          });
+          globalModelMessageMeta = cleanMeta;
+          globalSettings.MODEL_MESSAGE_META = cleanMeta;
+        }
+
+        const responseAutomationRaw = mapResponse.model_automation_map;
+        if (responseAutomationRaw && typeof responseAutomationRaw === 'object' && !Array.isArray(responseAutomationRaw)) {
+          const cleanAutomationMap = {};
+          Object.keys(responseAutomationRaw).forEach(modelKey => {
+            const key = normalizeModelKey(modelKey);
+            if (!key) {
+              return;
+            }
+            cleanAutomationMap[key] = normalizeBooleanFlag(responseAutomationRaw[modelKey], true);
+          });
+
+          globalSettings.MODEL_AUTOMATION_MAP = cleanAutomationMap;
+          globalModelMessages = globalModelMessages.map(entry => {
+            const key = normalizeModelKey(entry.model || '');
+            return {
+              ...entry,
+              automation_enabled: normalizeBooleanFlag(cleanAutomationMap[key], true),
+            };
+          });
+        }
+
+        renderModelsDatalist();
+        renderModelMessages();
+        showToast("Targets and model-specific messages saved!");
+      } catch (e) {
+        showError(e.message || 'Failed to save targets and model-specific messages');
+      }
+    }
+
+    // ── Settings Logic ──
+    async function saveSettings() {
+      // Loop over known DOM inputs that start with set_
+      const inputs = document.querySelectorAll('[id^=set_]');
+      const payload = {...globalSettings}; // keep anything not explicitly bound
+      
+      inputs.forEach(el => {
+        const key = el.id.replace('set_', '');
+        let val = el.value;
+        
+        // Handle types
+        if (el.type === 'checkbox') val = !!el.checked;
+        else if (el.type === 'number') val = Number(val);
+        else if (key === 'TELEGRAM_CHAT_IDS' || key === 'LOCK_ALERT_CHAT_IDS' || key === 'DM_RANDOM_EMOJI_SUFFIX_POOL') {
+          val = val.split(',').map(x => x.trim()).filter(x => x);
+        }
+        
+        payload[key] = val;
+      });
+
+      try {
+        await apiJson('/api/config/settings', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        showToast("Bot Settings Applied dynamically!");
+      } catch (e) {
+        showError(e.message || 'Failed to apply settings');
+      }
+    }
+
+    // ── Dashboard Live Stream ──
+    function renderBotControlButtons(dmState) {
+      const btnStartDM = document.getElementById('btnStartDM');
+      const btnStopDM = document.getElementById('btnStopDM');
+      
+      if (!btnStartDM || !btnStopDM) return;
+
+      // DM Bot Logic
+      const dmStatus = String(dmState.status || 'idle').toLowerCase();
+      const dmCanStart = ['idle', 'stopped'].includes(dmStatus);
+      const dmStartLoading = pendingBotCommand === 'start';
+      const dmStopLoading = pendingBotCommand === 'stop?mode=dm';
+
+      btnStartDM.style.display = dmCanStart ? 'flex' : 'none';
+      btnStopDM.style.display = dmCanStart ? 'none' : 'flex';
+      
+      btnStartDM.innerHTML = dmStartLoading 
+        ? '<i class="fas fa-spinner fa-spin"></i> STARTING...' 
+        : '<i class="fas fa-play"></i> START DM BOT';
+      btnStopDM.innerHTML = dmStopLoading
+        ? '<i class="fas fa-spinner fa-spin"></i> STOPPING...'
+        : '<i class="fas fa-stop"></i> STOP DM BOT';
+
+      btnStartDM.classList.toggle('is-loading', dmStartLoading);
+      btnStopDM.classList.toggle('is-loading', dmStopLoading);
+      btnStartDM.disabled = dmStartLoading || !dmCanStart;
+      btnStopDM.disabled = dmStopLoading || dmCanStart;
+
+      if (dmStartLoading && !dmCanStart) pendingBotCommand = '';
+      if (dmStopLoading && dmCanStart) pendingBotCommand = '';
+
+      // Liker Bot Logic
+      const likerState = lastKnownLikerState || { status: 'idle' };
+      const likerStatus = String(likerState.status || 'idle').toLowerCase();
+      const likerCanStart = ['idle', 'stopped'].includes(likerStatus);
+      const likerStartLoading = pendingBotCommand === 'start/liker';
+      const likerStopLoading = pendingBotCommand === 'stop/liker';
+
+      const btnStartLiker = document.getElementById('btnStartLiker');
+      const btnStopLiker = document.getElementById('btnStopLiker');
+      
+      if (btnStartLiker && btnStopLiker) {
+        btnStartLiker.style.display = likerCanStart ? 'flex' : 'none';
+        btnStopLiker.style.display = likerCanStart ? 'none' : 'flex';
+        
+        btnStartLiker.innerHTML = likerStartLoading 
+          ? '<i class="fas fa-spinner fa-spin"></i> STARTING...' 
+          : '<i class="fas fa-play"></i> START LIKER BOT';
+        btnStopLiker.innerHTML = likerStopLoading
+          ? '<i class="fas fa-spinner fa-spin"></i> STOPPING...'
+          : '<i class="fas fa-stop"></i> STOP LIKER BOT';
+
+        btnStartLiker.classList.toggle('is-loading', likerStartLoading);
+        btnStopLiker.classList.toggle('is-loading', likerStopLoading);
+        btnStartLiker.disabled = likerStartLoading || !likerCanStart;
+        btnStopLiker.disabled = likerStopLoading || likerCanStart;
+
+        if (likerStartLoading && !likerCanStart) pendingBotCommand = '';
+        if (likerStopLoading && likerCanStart) pendingBotCommand = '';
+      }
+
+      // Story Liker Bot Logic
+      const storyState = lastKnownStoryState || { status: 'idle' };
+      const storyStatus = String(storyState.status || 'idle').toLowerCase();
+      const storyCanStart = ['idle', 'stopped'].includes(storyStatus);
+      const storyStartLoading = pendingBotCommand === 'start/story';
+      const storyStopLoading = pendingBotCommand === 'stop/story';
+
+      const btnStartStory = document.getElementById('btnStartStory');
+      const btnStopStory = document.getElementById('btnStopStory');
+
+      if (btnStartStory && btnStopStory) {
+        btnStartStory.style.display = storyCanStart ? 'flex' : 'none';
+        btnStopStory.style.display = storyCanStart ? 'none' : 'flex';
+
+        btnStartStory.innerHTML = storyStartLoading
+          ? '<i class="fas fa-spinner fa-spin"></i> STARTING...'
+          : '<i class="fas fa-play"></i> START STORY LIKER';
+        btnStopStory.innerHTML = storyStopLoading
+          ? '<i class="fas fa-spinner fa-spin"></i> STOPPING...'
+          : '<i class="fas fa-stop"></i> STOP STORY LIKER';
+
+        btnStartStory.classList.toggle('is-loading', storyStartLoading);
+        btnStopStory.classList.toggle('is-loading', storyStopLoading);
+        btnStartStory.disabled = storyStartLoading || !storyCanStart;
+        btnStopStory.disabled = storyStopLoading || storyCanStart;
+
+        if (storyStartLoading && !storyCanStart) pendingBotCommand = '';
+        if (storyStopLoading && storyCanStart) pendingBotCommand = '';
+      }
+    }
+
+    function formatDashboardTimestamp(rawValue) {
+      const text = String(rawValue || '').trim();
+      return text || 'Never';
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const state = await res.json();
+        
+        const dm = state.dm || {};
+        const liker = state.liker || {};
+        const story = state.story || {};
+
+        // Update Stats
+        document.getElementById('lifetimeDms').innerText = dm.total_dms_all_time || 0;
+        document.getElementById('todayDms').innerText = dm.dms_sent_today || 0;
+        document.getElementById('lastDmSentAt').innerText = formatDashboardTimestamp(dm.last_dm_sent_at);
+        
+        document.getElementById('totalLikes').innerText = liker.total_likes_all_time || 0;
+        document.getElementById('todayLikes').innerText = liker.likes_today || 0;
+        document.getElementById('lastLikeAt').innerText = formatDashboardTimestamp(liker.last_like_at);
+
+        document.getElementById('totalStoryLikes').innerText = story.total_story_likes_all_time || 0;
+        document.getElementById('todayStoryLikes').innerText = story.story_likes_today || 0;
+        document.getElementById('lastStoryLikeAt').innerText = formatDashboardTimestamp(story.last_story_like_at);
+        
+        lastKnownDmState = dm;
+        lastKnownLikerState = liker;
+        lastKnownStoryState = story;
+
+        // Badges
+        const dmBadge = document.getElementById('dmStatusBadge');
+        if (dmBadge) {
+            dmBadge.className = `badge badge-${dm.status}`;
+            dmBadge.innerText = dm.status.toUpperCase();
+        }
+        const likerBadge = document.getElementById('likerStatusBadge');
+        if (likerBadge) {
+            likerBadge.className = `badge badge-${liker.status}`;
+            likerBadge.innerText = liker.status.toUpperCase();
+        }
+        const storyBadge = document.getElementById('storyStatusBadge');
+        if (storyBadge) {
+          storyBadge.className = `badge badge-${story.status}`;
+          storyBadge.innerText = story.status.toUpperCase();
+        }
+
+        // Global Badge
+        const badge = document.getElementById('statusBadge');
+        if (badge) {
+            const globalStatus = (dm.status === 'running' || liker.status === 'running' || story.status === 'running')
+              ? 'running'
+              : 'idle';
+            badge.className = `badge badge-${globalStatus}`;
+            badge.innerText = `BOT: ${globalStatus.toUpperCase()}`;
+        }
+        
+        // Buttons
+        renderBotControlButtons(dm);
+        
+        const dmLogs = (dm.log_lines || []);
+        const likerLogs = (liker.log_lines || []);
+        const storyLogs = (story.log_lines || []);
+        const combinedLogs = [...new Set([...dmLogs, ...likerLogs, ...storyLogs])].sort().slice(-100);
+
+        const html = combinedLogs.map(l => {
+          let cls = 'info';
+          if(l.includes('✅') || l.includes('success')) cls = 'success';
+          if(l.includes('❌') || l.includes('ERROR')) cls = 'error';
+          if(l.includes('⚠️') || l.includes('WARNING')) cls = 'warn';
+          return `<div class="line ${cls}">${l}</div>`;
+        }).join('');
+        
+        const term = document.getElementById('terminalBox');
+        if (term) {
+            const wasScrolled = term.scrollHeight - term.scrollTop === term.clientHeight;
+            term.innerHTML = html || '<div class="line info">No logs yet...</div>';
+            if(wasScrolled) term.scrollTop = term.scrollHeight; // Auto-scroll
+        }
+        
+      } catch(e){}
+    }
+    
+    async function botCommand(cmd) {
+      if (!globalIsMaster) {
+        return;
+      }
+
+      const normalizedCmd = String(cmd || '').toLowerCase();
+      if (!normalizedCmd.startsWith('start') && !normalizedCmd.startsWith('stop')) {
+        return;
+      }
+      if (pendingBotCommand) {
+        return;
+      }
+
+      pendingBotCommand = normalizedCmd;
+      renderBotControlButtons(lastKnownDmState);
+
+      try {
+        const res = await fetch('/' + normalizedCmd, { cache: 'no-store' });
+        if (!res.ok) {
+          let errText = '';
+          try {
+            errText = String(await res.text() || '').trim();
+          } catch (readErr) {}
+          throw new Error(errText || `Request failed (${res.status})`);
+        }
+      } catch (e) {
+        pendingBotCommand = '';
+        renderBotControlButtons(lastKnownDmState);
+        showError(e.message || `Failed to ${normalizedCmd} bot`);
+        return;
+      }
+
+      const deadline = Date.now() + (normalizedCmd === 'stop' ? 20000 : 8000);
+      while (Date.now() < deadline) {
+        await fetchStatus();
+        if (!pendingBotCommand) {
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 400));
+      }
+
+      if (pendingBotCommand === normalizedCmd) {
+        pendingBotCommand = '';
+        renderBotControlButtons(lastKnownBotStatus, lastKnownBotMode);
+      }
+    }
+
+    // ── Account Message UI Handlers ──
+    function openAccountMessageModalFromRow(idx) {
+      syncAccountsFromDom();
+      const account = globalAccounts[idx];
+      if (!account) return;
+
+      if (!globalIsMaster && account.shared_readonly) {
+        showError('Queued accounts from other employees are read-only');
+        return;
+      }
+
+      const username = String(account.username || '').trim();
+      const displayName = username || `Account ${idx + 1}`;
+
+      if (!Array.isArray(account.custom_messages)) {
+        account.custom_messages = [];
+      }
+
+      activeAccountMessageRowIndex = idx;
+      activeAccountMessageUser = displayName;
+
+      document.getElementById('accountMessageModalTitle').innerText = `Edit Custom Messages: ${displayName}`;
+      document.getElementById('accountMessageTextarea').value = account.custom_messages.join('\n');
+      document.getElementById('accountMessageModalOverlay').classList.add('show');
+    }
+
+    function closeAccountMessageModal() {
+      document.getElementById('accountMessageModalOverlay').classList.remove('show');
+      activeAccountMessageRowIndex = -1;
+      activeAccountMessageUser = '';
+    }
+
+    function saveAccountMessageModal() {
+      if (activeAccountMessageRowIndex < 0 || !globalAccounts[activeAccountMessageRowIndex]) {
+        showError('No account row selected for custom messages');
+        return;
+      }
+
+      const raw = document.getElementById('accountMessageTextarea').value;
+      const messages = parseMessageLines(raw);
+
+      const row = globalAccounts[activeAccountMessageRowIndex];
+      row.custom_messages = messages;
+
+      const username = activeAccountMessageUser;
+      closeAccountMessageModal();
+      renderAccounts();
+      showToast(`Custom messages staged for ${username}. Click Save Accounts to apply.`);
+    }
+
+    // ── Account Bio + URL Preset UI Handlers ──
+    function openAccountProfileModalFromRow(idx) {
+      syncAccountsFromDom();
+      const account = globalAccounts[idx];
+      if (!account) return;
+
+      const myOwnerKey = normalizeOwnerKey(globalCurrentUser.username || '');
+      const ownerKey = normalizeOwnerKey(account.owner_username || 'master');
+      if (!globalIsMaster && (account.shared_readonly || ownerKey !== myOwnerKey)) {
+        showError('Queued accounts from other employees are read-only');
+        return;
+      }
+
+      const username = String(account.username || '').trim();
+      const displayName = username || `Account ${idx + 1}`;
+
+      activeAccountProfileRowIndex = idx;
+      activeAccountProfileUser = displayName;
+
+      document.getElementById('accountProfileModalTitle').innerText = `Edit Bio + URL Preset: ${displayName}`;
+      document.getElementById('accountProfileTextarea').value = String(account.profile_note || '');
+      document.getElementById('accountProfileModalOverlay').classList.add('show');
+    }
+
+    function closeAccountProfileModal() {
+      document.getElementById('accountProfileModalOverlay').classList.remove('show');
+      activeAccountProfileRowIndex = -1;
+      activeAccountProfileUser = '';
+    }
+
+    function saveAccountProfileModal() {
+      if (activeAccountProfileRowIndex < 0 || !globalAccounts[activeAccountProfileRowIndex]) {
+        showError('No account row selected for bio + url preset');
+        return;
+      }
+
+      const raw = document.getElementById('accountProfileTextarea').value;
+      const row = globalAccounts[activeAccountProfileRowIndex];
+      row.profile_note = String(raw || '').trim();
+
+      const username = activeAccountProfileUser;
+      closeAccountProfileModal();
+      renderAccounts();
+      showToast(`Bio + URL preset staged for ${username}. Click Save Accounts to apply.`);
+    }
+
+    // ── Cookie UI Handlers ──
+    async function openCookieModalFromRow(idx) {
+      syncAccountsFromDom();
+      const account = globalAccounts[idx];
+      if (!account) return;
+
+      if (!globalIsMaster && account.shared_readonly) {
+        showError('Queued accounts from other employees are read-only');
+        return;
+      }
+
+      const username = String(account.username || '').trim();
+      if (!username) {
+        showError('Please enter username first.');
+        return;
+      }
+
+      activeCookieRowIndex = idx;
+      activeCookieUser = username;
+
+      document.getElementById('cookieModalTitle').innerText = `Edit Cookies: ${username}`;
+      document.getElementById('cookieJsonTextarea').value = 'Loading...';
+      document.getElementById('cookieModalOverlay').classList.add('show');
+
+      if (account.cookies_touched) {
+        document.getElementById('cookieJsonTextarea').value = account.cookies_raw || '';
+        return;
+      }
+
+      try {
+        const data = await apiJson(`/api/cookies/${encodeURIComponent(username)}`);
+        const cookiesRaw = data.cookies || '';
+        account.cookies_raw = cookiesRaw;
+        document.getElementById('cookieJsonTextarea').value = cookiesRaw;
+      } catch (e) {
+        document.getElementById('cookieJsonTextarea').value = account.cookies_raw || '';
+      }
+    }
+    
+    function closeCookieModal() {
+      document.getElementById('cookieModalOverlay').classList.remove('show');
+      activeCookieRowIndex = -1;
+      activeCookieUser = '';
+    }
+    
+    async function saveCookieModal() {
+      if (activeCookieRowIndex < 0 || !globalAccounts[activeCookieRowIndex]) {
+        showError('No account row selected for cookies');
+        return;
+      }
+
+      const val = document.getElementById('cookieJsonTextarea').value;
+      if (String(val || '').trim()) {
+        try {
+          JSON.parse(val);
+        } catch (e) {
+          showError('Cookies must be valid JSON');
+          return;
+        }
+      }
+
+      const row = globalAccounts[activeCookieRowIndex];
+      row.cookies_raw = val;
+      row.cookies_touched = true;
+
+      const username = activeCookieUser;
+      closeCookieModal();
+      showToast(`Cookies staged for ${username}. Click Save Accounts to apply.`);
+    }
+
+    // Init
+
+
+
+
+
+
+
+    async function initApp() {
+      renderBotControlButtons(lastKnownDmState);
+      await loadConfig();
+
+
+      if (!globalIsMaster) {
+        return;
+      }
+
+      await fetchStatus();
+      setInterval(() => {
+        fetchStatus();
+        loadEmployeeActivity();
+        loadAllActivity();
+      }, 5000); // 5s log poll
+    }
+
+    initApp();
+
+  </script>
+</body>
+</html>
