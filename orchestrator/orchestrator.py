@@ -48,11 +48,21 @@ class ModelState:
 
 
 class IGClient:
-    def __init__(self, base_url: str, username: str, password: str, timeout: int = 20) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        username: str,
+        password: str,
+        timeout: int = 20,
+        start_path: str = "/start",
+        stop_path: str = "/stop",
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.username = username
         self.password = password
         self.timeout = timeout
+        self.start_path = start_path
+        self.stop_path = stop_path
         self.session = requests.Session()
         self.last_login_ts = 0.0
 
@@ -84,7 +94,7 @@ class IGClient:
         if not self.ensure_login():
             return False
         try:
-            resp = self.session.get(f"{self.base_url}/start", timeout=self.timeout)
+            resp = self.session.get(f"{self.base_url}{self.start_path}", timeout=self.timeout)
             return resp.status_code in (200, 302)
         except Exception as exc:
             logging.error("IG start failed: %s", exc)
@@ -94,7 +104,7 @@ class IGClient:
         if not self.ensure_login():
             return False
         try:
-            resp = self.session.get(f"{self.base_url}/stop?mode=dm", timeout=self.timeout)
+            resp = self.session.get(f"{self.base_url}{self.stop_path}", timeout=self.timeout)
             return resp.status_code in (200, 302)
         except Exception as exc:
             logging.error("IG stop failed: %s", exc)
@@ -236,6 +246,17 @@ class CBClient:
         return self._emit_socket("stop-anon", {})
 
 
+def _parse_retry_after(value: str) -> Optional[int]:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        seconds = int(float(text))
+    except (TypeError, ValueError):
+        return None
+    return seconds if seconds > 0 else None
+
+
 class Orchestrator:
     def __init__(self, config: dict) -> None:
         self.config = config
@@ -248,11 +269,25 @@ class Orchestrator:
         cb_cfg = config.get("cb", {})
         timeout = int(config.get("polling", {}).get("http_timeout_sec", 20))
 
+        ig_mode_raw = os.environ.get("IG_MODE", ig_cfg.get("mode", "liker"))
+        ig_mode = str(ig_mode_raw or "").strip().lower()
+        if ig_mode == "story":
+            ig_start_path = "/start/story"
+            ig_stop_path = "/stop/story"
+        elif ig_mode == "liker":
+            ig_start_path = "/start/liker"
+            ig_stop_path = "/stop/liker"
+        else:
+            ig_start_path = "/start"
+            ig_stop_path = "/stop?mode=dm"
+
         self.ig = IGClient(
             base_url=os.environ.get("IG_BASE_URL", ig_cfg.get("base_url", "")),
             username=os.environ.get("IG_USERNAME", ig_cfg.get("username", "")),
             password=os.environ.get("IG_PASSWORD", ig_cfg.get("password", "")),
             timeout=timeout,
+            start_path=ig_start_path,
+            stop_path=ig_stop_path,
         )
         self.cb = CBClient(
             base_url=os.environ.get("CB_BASE_URL", cb_cfg.get("base_url", "")),
@@ -322,7 +357,9 @@ class Orchestrator:
     async def poll_events_for_model(self, model: ModelConfig, session: aiohttp.ClientSession) -> None:
         timeout_sec = int(self.config.get("polling", {}).get("events_timeout_sec", 12))
         stats_interval = int(self.config.get("polling", {}).get("stats_interval_sec", 60))
-        backoff = 2
+        backoff_base = int(self.config.get("polling", {}).get("events_backoff_sec", 2))
+        backoff_max = int(self.config.get("polling", {}).get("events_backoff_max_sec", 60))
+        backoff = max(1, backoff_base)
 
         next_url = model.events_url
         if not next_url.endswith("/"):
@@ -331,11 +368,23 @@ class Orchestrator:
         while not self.stop_event.is_set():
             try:
                 async with session.get(next_url, timeout=aiohttp.ClientTimeout(total=timeout_sec + 5)) as resp:
+                    if resp.status == 429:
+                        retry_after = _parse_retry_after(resp.headers.get("Retry-After", ""))
+                        delay = retry_after or backoff
+                        logging.warning(
+                            "Events API %s rate limited (429). Sleeping %ss", model.username, delay
+                        )
+                        await asyncio.sleep(delay)
+                        backoff = min(backoff_max, max(backoff_base, backoff * 2))
+                        continue
                     if resp.status != 200:
                         logging.warning("Events API %s status=%s", model.username, resp.status)
                         await asyncio.sleep(backoff)
+                        backoff = min(backoff_max, max(backoff_base, backoff * 2))
                         continue
                     payload = await resp.json()
+
+                backoff = max(1, backoff_base)
 
                 events = payload.get("events", [])
                 for event in events:
@@ -367,6 +416,7 @@ class Orchestrator:
             except Exception as exc:
                 logging.warning("Events poll error for %s: %s", model.username, exc)
                 await asyncio.sleep(backoff)
+                backoff = min(backoff_max, max(backoff_base, backoff * 2))
 
     async def check_stats(self, model: ModelConfig, session: aiohttp.ClientSession) -> None:
         if not model.token:
