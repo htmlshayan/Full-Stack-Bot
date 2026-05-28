@@ -1273,6 +1273,17 @@ def _process_model(
     }
     
     run_config_json = json.dumps(run_config)
+
+    profile_url = f"https://www.instagram.com/{model_username}/"
+    try:
+        driver.get(profile_url)
+        time.sleep(3)
+        if _is_page_unavailable(driver):
+            log_and_telegram(f"[{username}] ⚠️ @{model_username} profile unavailable. Skipping.")
+            return 0
+    except Exception as e:
+        log_and_telegram(f"[{username}] ⚠️ Failed to load @{model_username} profile: {e}")
+        return 0
     config_script = f"""
     sessionStorage.setItem('scraper_config', JSON.stringify({run_config_json}));
     sessionStorage.setItem('scraper_state', JSON.stringify({{

@@ -9,6 +9,22 @@ from core.auth import human_delay
 logger = logging.getLogger("model_dm_bot")
 
 
+def _is_page_unavailable(driver) -> bool:
+    try:
+        title = str(driver.title or "").lower()
+        if "page not found" in title:
+            return True
+        source = driver.page_source.lower()
+        markers = [
+            "sorry, this page isn't available",
+            "the link you followed may be broken",
+            "page may have been removed",
+        ]
+        return any(marker in source for marker in markers)
+    except Exception:
+        return False
+
+
 def run_story_liker_script(
     driver,
     model_username,
@@ -455,6 +471,9 @@ def run_story_liker_script(
         driver.get(profile_url)
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         human_delay(2.4, 3.6)
+        if _is_page_unavailable(driver):
+            logger.warning(f"⚠️ Profile @{model_username} unavailable. Skipping.")
+            return {"total_liked": 0, "found_story": False}
         try:
             driver.execute_script("window.scrollTo(0, 0);")
         except Exception:

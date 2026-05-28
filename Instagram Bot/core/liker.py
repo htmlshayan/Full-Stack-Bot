@@ -10,6 +10,22 @@ from core.auth import human_delay, human_scroll
 
 logger = logging.getLogger("model_dm_bot")
 
+
+def _is_page_unavailable(driver) -> bool:
+    try:
+        title = str(driver.title or "").lower()
+        if "page not found" in title:
+            return True
+        source = driver.page_source.lower()
+        markers = [
+            "sorry, this page isn't available",
+            "the link you followed may be broken",
+            "page may have been removed",
+        ]
+        return any(marker in source for marker in markers)
+    except Exception:
+        return False
+
 def run_comment_liker_script(driver, model_username, posts_count, likes_per_post, stop_event=None, on_like=None):
     """
     Pure Selenium implementation of the Instagram Comment Liker.
@@ -178,6 +194,9 @@ def run_comment_liker_script(driver, model_username, posts_count, likes_per_post
         logger.info(f"🚀 Navigating to model profile: @{model_username}")
         driver.get(profile_url)
         human_delay(3, 5)
+        if _is_page_unavailable(driver):
+            logger.warning(f"⚠️ Profile @{model_username} unavailable. Skipping.")
+            return {"total_liked": 0, "found_posts": False}
 
         # 2. Find posts/reels
         WebDriverWait(driver, 15).until(
