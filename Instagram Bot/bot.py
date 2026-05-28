@@ -517,6 +517,17 @@ def _models_for_account(account: dict, all_models: list) -> list:
     return models
 
 
+def _pop_random_item(items: list):
+    """Pop a random item from a list (returns None if empty)."""
+    if not items:
+        return None
+    try:
+        index = random.randrange(len(items))
+    except ValueError:
+        return None
+    return items.pop(index)
+
+
 def _build_account_pool_summary(accounts: list, models: list) -> str:
     """Build Telegram text for per-label and generic account availability."""
     display_by_key = {}
@@ -1388,6 +1399,11 @@ def _get_liker_driver(session_cache: dict, account: dict):
     if not username:
         return None
 
+    # Enforce a single active liker browser at a time.
+    for other_username in list(session_cache.keys()):
+        if other_username != username:
+            _close_liker_driver(session_cache, other_username)
+
     driver = session_cache.get(username)
     if driver:
         try:
@@ -1473,9 +1489,10 @@ def run_liker_bot(stop_event=None, account_owner=None, continuous_mode=False, st
                 if stop_event.wait(300): break
                 continue
 
-            random.shuffle(models)
+            model_pool = list(models)
 
-            for model_username in models:
+            while model_pool:
+                model_username = _pop_random_item(model_pool)
                 if stop_event and stop_event.is_set(): break
                 
                 if not model_username: continue
@@ -1497,21 +1514,19 @@ def run_liker_bot(stop_event=None, account_owner=None, continuous_mode=False, st
                         break
                     continue
 
-                random.shuffle(accounts)
-                if preferred_account_username:
-                    accounts.sort(
-                        key=lambda acc: 0
-                        if str(acc.get("username") or "").strip().lower()
-                        == preferred_account_username.lower()
-                        else 1
-                    )
+                account_pool = list(accounts)
+                total_accounts = len(account_pool)
 
                 success = False
                 no_posts_found = False
                 lock_skips = 0
                 lock_reasons = {}
-                for acc in accounts:
+                while account_pool:
                     if stop_event and stop_event.is_set(): break
+
+                    acc = _pop_random_item(account_pool)
+                    if not acc:
+                        continue
                     
                     username = acc.get("username")
                     if state_obj:
@@ -1572,7 +1587,7 @@ def run_liker_bot(stop_event=None, account_owner=None, continuous_mode=False, st
                     logger.info(f"No posts/reels found for @{model_username}. Skipping to next model.")
                     continue
 
-                if not success and lock_skips >= len(accounts):
+                if not success and lock_skips >= total_accounts:
                     reason_summary = ", ".join(
                         f"{reason}={count}" for reason, count in lock_reasons.items()
                     ) or "unknown"
@@ -1796,12 +1811,15 @@ def run_story_liker_bot(stop_event=None, account_owner=None, continuous_mode=Fal
                     break
                 continue
 
-            random.shuffle(models)
-            random.shuffle(accounts)
+            account_pool = list(accounts)
 
-            for acc in accounts:
+            while account_pool:
                 if stop_event and stop_event.is_set():
                     break
+
+                acc = _pop_random_item(account_pool)
+                if not acc:
+                    continue
 
                 username = acc.get("username")
                 if state_obj:
@@ -1868,7 +1886,9 @@ def run_story_liker_bot(stop_event=None, account_owner=None, continuous_mode=Fal
                         cycle_num += 1
                         likes_at_cycle_start = likes_for_account
 
-                        for model_username in models:
+                        model_pool = list(models)
+                        while model_pool:
+                            model_username = _pop_random_item(model_pool)
                             if stop_event and stop_event.is_set():
                                 break
                             if likes_for_account >= account_like_target:
@@ -1897,6 +1917,9 @@ def run_story_liker_bot(stop_event=None, account_owner=None, continuous_mode=Fal
                                     f"No followers found for @{model_username} with @{username}."
                                 )
                                 continue
+
+                            followers = list(followers)
+                            random.shuffle(followers)
 
                             seen_followers.update(followers)
 
