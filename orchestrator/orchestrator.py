@@ -142,6 +142,7 @@ class CBClient:
                 return False
             self.token = token
             self.token_ts = time.time()
+            logging.info("CB login ok")
             return True
         except Exception as exc:
             logging.error("CB login failed: %s", exc)
@@ -168,7 +169,9 @@ class CBClient:
                 logging.error("CB request failed: %s %s status=%s", method, path, resp.status_code)
                 return None
             if resp.text:
+                logging.info("CB request ok: %s %s status=%s", method, path, resp.status_code)
                 return resp.json()
+            logging.info("CB request ok: %s %s status=%s", method, path, resp.status_code)
             return {}
         except Exception as exc:
             logging.error("CB request error: %s", exc)
@@ -228,6 +231,7 @@ class CBClient:
             client.emit(event_name, data or {})
             time.sleep(1)
             client.disconnect()
+            logging.info("CB socket emit ok: %s", event_name)
             return True
         except Exception as exc:
             logging.error("CB socket emit failed: %s", exc)
