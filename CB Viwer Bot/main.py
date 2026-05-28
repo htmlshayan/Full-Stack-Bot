@@ -1477,7 +1477,7 @@ async def start_anon(sid, data):
         launch_in_progress = False
 
 @sio.on('stop-anon')
-async def stop_anon(sid):
+async def stop_anon(sid, data=None):
     if not await ensure_socket_auth(sid, required_role="admin"):
         return
     global launch_cancel_event, distributed_run_active, distributed_run_id
