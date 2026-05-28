@@ -5,6 +5,8 @@ from sqlalchemy import Column, String, Text, Boolean, text
 
 # Use SQLite by default for localhost, can be overridden by DATABASE_URL env var
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./data/bot.db")
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
 engine = create_async_engine(
     DATABASE_URL,

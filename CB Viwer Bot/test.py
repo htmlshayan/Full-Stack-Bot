@@ -8,7 +8,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from core.net_throttle import apply_network_throttle
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -49,7 +48,6 @@ class CloudflareSolverSelenium:
         driver.execute_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
-        apply_network_throttle(driver)
         return driver
 
     def _human_click(self, element) -> None:

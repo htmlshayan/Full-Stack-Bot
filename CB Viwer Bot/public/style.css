@@ -274,6 +274,18 @@ header p {
     border-color: rgba(16, 185, 129, 0.2);
 }
 
+.status-badge.os-badge.windows {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.status-badge.os-badge.macos {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
 /* Forms */
 .input-group {
     margin-bottom: 1rem;
@@ -713,6 +725,16 @@ textarea {
     line-height: 1;
     color: var(--accent);
     text-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+}
+
+.os-instance-card.windows .big-number-display span {
+    color: #38bdf8;
+    text-shadow: 0 0 30px rgba(56, 189, 248, 0.35);
+}
+
+.os-instance-card.macos .big-number-display span {
+    color: #f59e0b;
+    text-shadow: 0 0 30px rgba(245, 158, 11, 0.35);
 }
 
 .big-number-display small {

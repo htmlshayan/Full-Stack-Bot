@@ -15,3 +15,5 @@ asyncpg
 greenlet
 httpx
 psutil
+python-dotenv
+redis

@@ -1,0 +1,16 @@
+# Environments
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+
+
+# Data
+/data/
+
+# IDEs
+.vscode/
+.idea/

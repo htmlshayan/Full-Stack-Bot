@@ -8,6 +8,11 @@ import tempfile
 import shutil
 import random
 import math
+import signal
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
@@ -15,7 +20,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException, WebDriverException
-from core.net_throttle import apply_network_throttle
+from core.chrome import detect_installed_chrome_major_version, prepare_chromedriver_copy, resolve_chrome_binary
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("cb_bot.bots.cookie")
@@ -27,6 +32,16 @@ if os.name == "nt":
     import msvcrt
 else:
     import fcntl
+
+_active_viewer = None
+
+
+def _handle_shutdown(signum, _frame):
+    viewer = _active_viewer
+    if viewer:
+        viewer.shutdown(f"signal {signum}")
+    else:
+        sys.exit(0)
 
 
 def acquire_driver_lock(lock_path: str, timeout: int = 30):
@@ -92,6 +107,7 @@ def parse_env_messages(name: str) -> list:
     return [line.strip() for line in raw.splitlines() if line.strip()]
 
 
+
 class CookieViewer:
     def __init__(self, username, cookie_file, proxy=None, headless: bool = False):
         self.username = username
@@ -109,6 +125,7 @@ class CookieViewer:
         self.tile_index = parse_env_int("CB_TILE_INDEX", 0, min_value=0)
         self.tile_total = parse_env_int("CB_TILE_TOTAL", 1, min_value=1)
         self.tile_cols = parse_env_int("CB_TILE_COLS", 4, min_value=1)
+        self._shutdown = False
 
         if self.msg_min_seconds > self.msg_max_seconds:
             self.msg_min_seconds, self.msg_max_seconds = self.msg_max_seconds, self.msg_min_seconds
@@ -116,41 +133,116 @@ class CookieViewer:
             self.msg_enabled = False
 
     def create_driver(self):
-        options = uc.ChromeOptions()
         if not self.profile_dir:
-            # Use a unique OS temp profile per browser instance to avoid profile locks.
-            self.profile_dir = tempfile.mkdtemp(prefix="cbot_profile_")
-        options.add_argument(f"--user-data-dir={self.profile_dir}")
-        options.add_argument("--profile-directory=Default")
-        options.add_argument("--no-first-run")
-        options.add_argument("--no-default-browser-check")
-        options.add_argument("--remote-debugging-port=0")
-        if self.headless:
-            options.add_argument("--headless=new")
-            options.add_argument("--disable-gpu")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--disable-infobars")
-        options.add_argument("--start-maximized")
-        options.add_argument("--window-size=1280,720")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-
-        if self.proxy:
-            logger.info(f"Using proxy: {self.proxy}")
-            options.add_argument(f"--proxy-server={self.proxy}")
+            # Use a unique profile per browser instance in a predictable location for cleanup.
+            base_temp = os.path.abspath(os.path.join("data", "temp", "profiles"))
+            os.makedirs(base_temp, exist_ok=True)
+            self.profile_dir = os.path.join(base_temp, f"profile_{uuid.uuid4().hex}")
+        chrome_version_main = detect_installed_chrome_major_version()
+        if chrome_version_main:
+            logger.info(f"Detected Chrome major version: {chrome_version_main}")
+        driver_path = prepare_chromedriver_copy(chrome_version_main)
+        if driver_path:
+            logger.info(f"Using ChromeDriver: {driver_path}")
+        elif os.getenv("CHROMEDRIVER_PATH", "").strip():
+            logger.warning("CHROMEDRIVER_PATH set but driver was not found or usable.")
 
         for attempt in range(1, MAX_DRIVER_RETRIES + 1):
             lock_handle = None
             try:
+                options = uc.ChromeOptions()
+                options.add_argument(f"--user-data-dir={self.profile_dir}")
+                options.add_argument("--profile-directory=Default")
+                options.add_argument("--no-first-run")
+                options.add_argument("--no-default-browser-check")
+                options.add_argument("--remote-debugging-port=0")
+                if self.headless:
+                    options.add_argument("--headless=new")
+
+                # Optimization flags for high-density botting
+                options.add_argument("--disable-gpu")
+                options.add_argument("--disable-software-rasterizer")
+                options.add_argument("--mute-audio")
+                options.add_argument("--disable-extensions")
+                options.add_argument("--disable-background-networking")
+                options.add_argument("--disable-background-timer-throttling")
+                options.add_argument("--disable-backgrounding-occluded-windows")
+                options.add_argument("--disable-breakpad")
+                options.add_argument("--disable-client-side-phishing-detection")
+                options.add_argument("--disable-component-update")
+                options.add_argument("--disable-default-apps")
+                options.add_argument("--disable-domain-reliability")
+                options.add_argument("--disable-features=AudioServiceOutOfProcess,IsolateOrigins,site-per-process")
+                options.add_argument("--disable-hang-monitor")
+                options.add_argument("--disable-ipc-flooding-protection")
+                options.add_argument("--disable-notifications")
+                options.add_argument("--disable-offer-store-unmasked-wallet-cards")
+                options.add_argument("--disable-popup-blocking")
+                options.add_argument("--disable-print-preview")
+                options.add_argument("--disable-prompt-on-repost")
+                options.add_argument("--disable-renderer-backgrounding")
+                options.add_argument("--disable-setuid-sandbox")
+                options.add_argument("--disable-speech-api")
+                options.add_argument("--disable-sync")
+                options.add_argument("--hide-scrollbars")
+                options.add_argument("--ignore-certificate-errors")
+                options.add_argument("--metrics-recording-only")
+                options.add_argument("--no-pings")
+                options.add_argument("--password-store=basic")
+                options.add_argument("--use-mock-keychain")
+                options.add_argument("--disable-side-api")
+                options.add_argument("--disable-back-forward-cache")
+                options.add_argument("--js-flags=--max-old-space-size=256")
+
+                # Limit cache to save SSD and I/O
+                options.add_argument("--disk-cache-size=1048576")
+                options.add_argument("--media-cache-size=1048576")
+                options.add_argument("--disk-cache-dir=/dev/null") if os.path.exists("/dev/null") else None
+
+                options.add_argument("--disable-blink-features=AutomationControlled")
+                options.add_argument("--disable-infobars")
+                options.add_argument("--window-size=800,600") # Smaller default window size
+                options.add_argument("--no-sandbox")
+                options.add_argument("--disable-dev-shm-usage")
+
+                # Disable images and notifications to save RAM and bandwidth.
+                # Note: stylesheets are NOT disabled by default as they may break element visibility checks.
+                prefs = {
+                    "profile.managed_default_content_settings.images": 2,
+                    "profile.default_content_setting_values.notifications": 2,
+                }
+                options.add_experimental_option("prefs", prefs)
+
+                chrome_binary = resolve_chrome_binary()
+                if chrome_binary:
+                    logger.info(f"Using Chrome binary: {chrome_binary}")
+                    options.binary_location = chrome_binary
+
+                if self.proxy:
+                    logger.info(f"Using proxy: {self.proxy}")
+                    options.add_argument(f"--proxy-server={self.proxy}")
+
                 lock_handle = acquire_driver_lock(os.path.join("data", "temp", "uc.lock"))
-                self.driver = uc.Chrome(options=options)
+                uc_kwargs = {"options": options}
+                if driver_path:
+                    uc_kwargs["driver_executable_path"] = driver_path
+                if chrome_version_main:
+                    uc_kwargs["version_main"] = chrome_version_main
+                if chrome_binary:
+                    uc_kwargs["browser_executable_path"] = chrome_binary
+                use_subprocess = parse_env_bool(
+                    "UC_USE_SUBPROCESS",
+                    default=(sys.platform == "darwin"),
+                )
+                if use_subprocess:
+                    uc_kwargs["use_subprocess"] = True
+                self.driver = uc.Chrome(**uc_kwargs)
                 try:
                     self.driver.execute_script(
                         "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
                     )
                 except Exception:
                     pass
-                apply_network_throttle(self.driver)
                 try:
                     if not self.headless:
                         self.driver.maximize_window()
@@ -159,8 +251,11 @@ class CookieViewer:
                 except Exception:
                     pass
                 return self.driver
-            except Exception as e:
-                logger.warning(f"Chrome launch failed (attempt {attempt}/{MAX_DRIVER_RETRIES}): {e}")
+            except Exception:
+                logger.warning(
+                    f"Chrome launch failed (attempt {attempt}/{MAX_DRIVER_RETRIES}).",
+                    exc_info=True,
+                )
                 if self.driver:
                     try:
                         self.driver.quit()
@@ -174,6 +269,28 @@ class CookieViewer:
                     release_driver_lock(lock_handle)
 
         raise RuntimeError("Failed to launch Chrome after retries")
+
+    def register_signal_handlers(self) -> None:
+        for sig in (signal.SIGTERM, signal.SIGINT, getattr(signal, "SIGHUP", None)):
+            if not sig:
+                continue
+            try:
+                signal.signal(sig, _handle_shutdown)
+            except Exception:
+                continue
+
+    def shutdown(self, reason: str) -> None:
+        if self._shutdown:
+            return
+        self._shutdown = True
+        logger.warning(f"Shutdown requested ({reason}). Closing browser.")
+        if self.driver:
+            try:
+                self.driver.quit()
+            except Exception:
+                pass
+        self.cleanup_profile_dir()
+        sys.exit(0)
 
     def handle_entrance_terms(self, timeout: int = 8) -> bool:
         """Click 'I AGREE' on entrance terms dialog if present."""
@@ -268,26 +385,7 @@ class CookieViewer:
         EnumWindows(EnumWindowsProc(enum_proc), 0)
         return target_hwnd
 
-    def tile_window(self) -> bool:
-        if os.name != "nt" or self.headless:
-            return False
-        hwnd = self.find_window_handle()
-        if not hwnd:
-            return False
-        try:
-            import ctypes
-            from ctypes import wintypes
-        except Exception:
-            return False
-
-        user32 = ctypes.windll.user32
-        SPI_GETWORKAREA = 0x0030
-        rect = wintypes.RECT()
-        if not user32.SystemParametersInfoW(SPI_GETWORKAREA, 0, ctypes.byref(rect), 0):
-            rect = wintypes.RECT(0, 0, user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
-
-        work_width = max(1, rect.right - rect.left)
-        work_height = max(1, rect.bottom - rect.top)
+    def _calculate_tile_rect(self, work_left: int, work_top: int, work_width: int, work_height: int):
         total = max(1, self.tile_total)
 
         min_tile_width = 240
@@ -310,15 +408,70 @@ class CookieViewer:
         base_height = max(1, work_height // rows)
         width = base_width if col < cols - 1 else work_width - (base_width * (cols - 1))
         height = base_height if row < rows - 1 else work_height - (base_height * (rows - 1))
-        x = rect.left + (col * base_width)
-        y = rect.top + (row * base_height)
+        x = work_left + (col * base_width)
+        y = work_top + (row * base_height)
+        return x, y, width, height
 
-        SW_RESTORE = 9
-        SWP_SHOWWINDOW = 0x0040
-        SWP_NOZORDER = 0x0004
-        user32.ShowWindow(hwnd, SW_RESTORE)
-        user32.SetWindowPos(hwnd, 0, x, y, width, height, SWP_NOZORDER | SWP_SHOWWINDOW)
-        return True
+    def tile_window(self) -> bool:
+        if self.headless or not self.driver:
+            return False
+        if os.name == "nt":
+            hwnd = self.find_window_handle()
+            if not hwnd:
+                return False
+            try:
+                import ctypes
+                from ctypes import wintypes
+            except Exception:
+                return False
+
+            user32 = ctypes.windll.user32
+            SPI_GETWORKAREA = 0x0030
+            rect = wintypes.RECT()
+            if not user32.SystemParametersInfoW(SPI_GETWORKAREA, 0, ctypes.byref(rect), 0):
+                rect = wintypes.RECT(0, 0, user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
+
+            work_width = max(1, rect.right - rect.left)
+            work_height = max(1, rect.bottom - rect.top)
+            x, y, width, height = self._calculate_tile_rect(rect.left, rect.top, work_width, work_height)
+
+            SW_RESTORE = 9
+            SWP_SHOWWINDOW = 0x0040
+            SWP_NOZORDER = 0x0004
+            user32.ShowWindow(hwnd, SW_RESTORE)
+            user32.SetWindowPos(hwnd, 0, x, y, width, height, SWP_NOZORDER | SWP_SHOWWINDOW)
+            return True
+
+        try:
+            dims = self.driver.execute_script(
+                "return {w: window.screen.availWidth || window.screen.width || 0, "
+                "h: window.screen.availHeight || window.screen.height || 0, "
+                "x: window.screen.availLeft || 0, y: window.screen.availTop || 0};"
+            )
+        except Exception:
+            return False
+        if not isinstance(dims, dict):
+            return False
+        try:
+            work_width = int(dims.get("w") or 0)
+            work_height = int(dims.get("h") or 0)
+            work_left = int(dims.get("x") or 0)
+            work_top = int(dims.get("y") or 0)
+        except Exception:
+            return False
+        if work_width <= 0 or work_height <= 0:
+            return False
+
+        x, y, width, height = self._calculate_tile_rect(work_left, work_top, work_width, work_height)
+        try:
+            self.driver.set_window_rect(x, y, width, height)
+            return True
+        except Exception:
+            try:
+                self.driver.set_window_size(width, height)
+                return True
+            except Exception:
+                return False
 
     def tile_window_with_retry(self, attempts: int = 5, delay: float = 0.3) -> None:
         for _ in range(max(1, attempts)):
@@ -380,9 +533,14 @@ class CookieViewer:
         return time.time() + random.uniform(self.msg_min_seconds, self.msg_max_seconds)
 
     def park_until_stop(self, reason: str) -> None:
-        logger.warning(f"{reason} Keeping browser open until manual stop.")
-        while True:
-            time.sleep(60)
+        logger.warning(f"{reason} Cleaning up and exiting.")
+        if self.driver:
+            try:
+                self.driver.quit()
+            except Exception:
+                pass
+        self.cleanup_profile_dir()
+        sys.exit(1)
 
     def clear_chat_input(self, element) -> None:
         try:
@@ -541,6 +699,9 @@ class CookieViewer:
     def run(self):
         logger.info(f"Starting Cookie Viewer for {self.username}...")
         driver = None
+        global _active_viewer
+        _active_viewer = self
+        self.register_signal_handlers()
 
         try:
             # --- Load cookies from file ---
@@ -626,6 +787,9 @@ class CookieViewer:
             self.set_window_title()
             self.tile_window_with_retry(attempts=4, delay=0.3)
             self.focus_window_with_retry(attempts=3, delay=0.7)
+
+            # Additional check to ensure we are actually on the page before signaling READY
+            self.wait_for_target_room(timeout=30)
             logger.info("READY: target_loaded")
 
             # --- Step 8: Stay active (heartbeat loop) ---
@@ -674,6 +838,8 @@ class CookieViewer:
                 self.cleanup_profile_dir()
             elif not driver:
                 self.cleanup_profile_dir()
+            if _active_viewer is self:
+                _active_viewer = None
 
 
 if __name__ == "__main__":

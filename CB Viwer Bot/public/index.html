@@ -125,18 +125,33 @@
                     </section>
 
 
-                    <!-- Active Browsers Tracker Card -->
-                    <section class="card control-card browser-tracker-card">
+                    <!-- Windows Instances Card -->
+                    <section class="card control-card os-instance-card windows">
                         <div class="card-header">
-                            <h3>Active Browsers</h3>
-                            <span class="status-badge running">Tracking</span>
+                            <h3>Windows Instances</h3>
+                            <span class="status-badge os-badge windows">Windows</span>
                         </div>
                         <div class="card-body tracker-body">
                             <div class="big-number-display">
-                                <span id="active-browsers-count">0</span>
-                                <small>Windows Running</small>
+                                <span id="active-browsers-windows">0</span>
+                                <small>Instances Running</small>
                             </div>
-                            <p class="hintText">Monitors real-time Chrome instances on this machine.</p>
+                            <p class="hintText">Live instances reported by Windows workers.</p>
+                        </div>
+                    </section>
+
+                    <!-- macOS Instances Card -->
+                    <section class="card control-card os-instance-card macos">
+                        <div class="card-header">
+                            <h3>macOS Instances</h3>
+                            <span class="status-badge os-badge macos">macOS</span>
+                        </div>
+                        <div class="card-body tracker-body">
+                            <div class="big-number-display">
+                                <span id="active-browsers-macos">0</span>
+                                <small>Instances Running</small>
+                            </div>
+                            <p class="hintText">Live instances reported by macOS workers.</p>
                         </div>
                     </section>
 

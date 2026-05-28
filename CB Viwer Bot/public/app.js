@@ -174,10 +174,34 @@ loadMessageStats();
 setInterval(loadMessageStats, 30000);
 
 // Socket Handlers
-socket.on('browser-count', ({ count }) => {
+socket.on('browser-count', (payload = {}) => {
+    const { count = 0, windows, macos, platform } = payload || {};
     if (els.browsersCount) els.browsersCount.textContent = count;
-    const bigCounter = document.getElementById('active-browsers-count');
-    if (bigCounter) bigCounter.textContent = count;
+
+    const windowsCounter = document.getElementById('active-browsers-windows');
+    const macosCounter = document.getElementById('active-browsers-macos');
+
+    const hasWindows = windows !== undefined && windows !== null;
+    const hasMacos = macos !== undefined && macos !== null;
+    const windowsNum = hasWindows ? Number(windows) : null;
+    const macosNum = hasMacos ? Number(macos) : null;
+    const bothZero = windowsNum === 0 && macosNum === 0;
+    let windowsValue = windows;
+    let macosValue = macos;
+
+    if ((!hasWindows && !hasMacos) || (bothZero && count > 0)) {
+        const normalized = String(platform || '').toLowerCase();
+        if (normalized === 'windows') {
+            windowsValue = count;
+            macosValue = 0;
+        } else if (normalized === 'macos') {
+            windowsValue = 0;
+            macosValue = count;
+        }
+    }
+
+    if (windowsCounter) windowsCounter.textContent = windowsValue ?? 0;
+    if (macosCounter) macosCounter.textContent = macosValue ?? 0;
 });
 
 socket.on('message-stats', (stats) => {

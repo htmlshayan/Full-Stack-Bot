@@ -6,6 +6,7 @@ import subprocess
 import hashlib
 import secrets
 import time
+import platform
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 from fastapi import Depends, FastAPI, Request
@@ -16,11 +17,14 @@ from sqlalchemy.future import select
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import init_db, get_db, AccountModel, SettingsModel, EmployeeModel, SessionLocal, TargetModel
+from core.chrome import lock_chrome_version, parse_version_major, resolve_chromedriver_path
 from contextlib import asynccontextmanager
 import socketio
 import uuid
 import httpx
 import psutil
+import redis.asyncio as redis
+from dotenv import load_dotenv
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 DEFAULT_USERNAME     = "bey"
@@ -28,6 +32,40 @@ DEFAULT_PASSWORD     = "#beycbbot!"
 SESSION_DURATION     = timedelta(hours=24)
 sessions: Dict[str, Dict[str, object]] = {}   # token -> {expiry, role}
 socket_tokens: Dict[str, Dict[str, str]] = {}   # sid -> {token, role}
+
+ENV_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), ".env")
+if os.path.isfile(ENV_PATH):
+    load_dotenv(ENV_PATH)
+    print(f"[INFO] Loaded environment from: {ENV_PATH}")
+else:
+    load_dotenv()
+    print("[INFO] Loaded environment from system variables (no .env found).")
+
+# ── Distributed (Redis) Settings ─────────────────────────────────────────────
+REDIS_URL = os.getenv("REDIS_URL", "").strip()
+REDIS_ENABLED = bool(REDIS_URL)
+REDIS_QUEUE_KEY = os.getenv("REDIS_QUEUE_KEY", "cb:queue")
+REDIS_EVENTS_CHANNEL = os.getenv("REDIS_EVENTS_CHANNEL", "cb:events")
+REDIS_CONTROL_CHANNEL = os.getenv("REDIS_CONTROL_CHANNEL", "cb:control")
+REDIS_WORKER_PREFIX = os.getenv("REDIS_WORKER_PREFIX", "cb:worker:")
+
+worker_browser_counts: Dict[str, int] = {}
+worker_browser_platforms: Dict[str, str] = {}
+distributed_run_active: bool = False
+distributed_run_id: Optional[str] = None
+MAX_PROFILES_PER_SERVER = 10
+
+def normalize_platform(value: str) -> str:
+    text = str(value or "").strip().lower()
+    if text.startswith("win"):
+        return "windows"
+    if text in ("darwin", "mac", "macos", "osx", "os x"):
+        return "macos"
+    if text.startswith("linux"):
+        return "linux"
+    return "unknown"
+
+LOCAL_PLATFORM = normalize_platform(platform.system())
 
 def hash_pw(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
@@ -120,24 +158,150 @@ class Target(BaseModel):
     description: Optional[str] = ""
     enabled: Optional[bool] = True
 
+def total_browser_count() -> int:
+    distributed = sum(worker_browser_counts.values()) if worker_browser_counts else 0
+    local = sum(1 for p in processes.get("cookie", []) if p.poll() is None)
+    return distributed + local
+
+def browser_counts_by_platform() -> Dict[str, int]:
+    counts: Dict[str, int] = {
+        "windows": 0,
+        "macos": 0,
+        "linux": 0,
+        "unknown": 0,
+    }
+    local_count = sum(1 for p in processes.get("cookie", []) if p.poll() is None)
+    counts[LOCAL_PLATFORM] = counts.get(LOCAL_PLATFORM, 0) + local_count
+    for worker_id, count in worker_browser_counts.items():
+        platform_name = worker_browser_platforms.get(worker_id, "unknown")
+        counts[platform_name] = counts.get(platform_name, 0) + count
+    return counts
+
+def build_browser_count_payload(include_system: bool = False) -> Dict[str, object]:
+    count = total_browser_count()
+    platform_counts = browser_counts_by_platform()
+    payload: Dict[str, object] = {
+        "count": count,
+        "windows": platform_counts.get("windows", 0),
+        "macos": platform_counts.get("macos", 0),
+        "platform": LOCAL_PLATFORM,
+    }
+    if include_system:
+        payload["cpu"] = psutil.cpu_percent()
+        payload["ram"] = psutil.virtual_memory().percent
+    return payload
+
 async def track_browsers():
-    """Count only the Selenium browser processes we spawned (not all Chrome on machine)."""
+    """Count only the Selenium browser processes we spawned and track system resources."""
     while True:
         try:
-            # A process is 'live' if poll() returns None (still running)
-            count = sum(1 for p in processes.get("cookie", []) if p.poll() is None)
-            await sio.emit('browser-count', {'count': count})
+            await sio.emit('browser-count', build_browser_count_payload(include_system=True))
         except Exception as e:
             print(f"Browser tracking error: {e}")
         await asyncio.sleep(5)
+
+async def fetch_active_workers(redis_conn: redis.Redis) -> list:
+    workers = []
+    pattern = f"{REDIS_WORKER_PREFIX}*"
+    async for key in redis_conn.scan_iter(match=pattern):
+        raw = await redis_conn.get(key)
+        if not raw:
+            continue
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        worker_id = data.get("id") or key.replace(REDIS_WORKER_PREFIX, "")
+        data["id"] = worker_id
+        workers.append(data)
+    return workers
+
+async def publish_control(redis_conn: redis.Redis, command: str, run_id: str = "") -> None:
+    payload = {"command": command, "run_id": run_id}
+    await redis_conn.publish(REDIS_CONTROL_CHANNEL, json.dumps(payload))
+
+async def redis_event_listener(redis_conn: redis.Redis) -> None:
+    pubsub = redis_conn.pubsub()
+    await pubsub.subscribe(REDIS_EVENTS_CHANNEL)
+    async for message in pubsub.listen():
+        if message.get("type") != "message":
+            continue
+        raw = message.get("data")
+        try:
+            event = json.loads(raw)
+        except Exception:
+            continue
+
+        evt_type = str(event.get("type") or "").lower()
+        if evt_type == "log":
+            await sio.emit('log', {
+                'name': event.get("name", "worker"),
+                'type': str(event.get("level") or "info"),
+                'data': event.get("data", "")
+            })
+        elif evt_type == "browser-count":
+            worker_id = str(event.get("worker_id") or "")
+            if worker_id:
+                try:
+                    worker_browser_counts[worker_id] = int(event.get("count") or 0)
+                except (TypeError, ValueError):
+                    worker_browser_counts[worker_id] = 0
+                raw_platform = event.get("platform")
+                if raw_platform:
+                    worker_browser_platforms[worker_id] = normalize_platform(raw_platform)
+        elif evt_type == "message-sent":
+            try:
+                delta = int(event.get("delta") or 1)
+            except (TypeError, ValueError):
+                delta = 1
+            stats = await bump_message_stats(delta)
+            await sio.emit('message-stats', stats)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     async with SessionLocal() as db:
         await init_auth(db)
-    asyncio.create_task(track_browsers())
+    print("[INFO] Locking Chrome major version to installed Chrome...")
+    locked_version = lock_chrome_version(ENV_PATH)
+    if locked_version:
+        print(f"[INFO] CHROME_VERSION_MAIN resolved: {locked_version}")
+    else:
+        print("[INFO] Chrome major version not detected; leaving CHROME_VERSION_MAIN unset.")
+    app.state.redis = None
+    app.state.bg_tasks = []
+    if REDIS_ENABLED:
+        try:
+            print("[INFO] Checking Redis connectivity...")
+            app.state.redis = redis.from_url(REDIS_URL, decode_responses=True)
+            await app.state.redis.ping()
+            print("REDIS_PING_OK")
+            print(f"[INFO] Connected to Redis at {REDIS_URL}")
+            print("[INFO] Syncing Redis settings in database...")
+            try:
+                async with SessionLocal() as db:
+                    await sync_redis_settings(db)
+                print("REDIS_SETTINGS_SYNCED")
+            except Exception as exc:
+                print(f"[ERROR] REDIS_SETTINGS_SYNC_FAILED: {exc}")
+            print("[INFO] Resolving ChromeDriver path...")
+            required_major = parse_version_major(os.getenv("CHROME_VERSION_MAIN", ""))
+            driver_path = resolve_chromedriver_path(required_major)
+            if driver_path:
+                os.environ["CHROMEDRIVER_PATH"] = driver_path
+                print(f"[INFO] Auto-resolved CHROMEDRIVER_PATH: {driver_path}")
+            else:
+                print("[INFO] No matching ChromeDriver found; using undetected_chromedriver auto.")
+            app.state.bg_tasks.append(asyncio.create_task(redis_event_listener(app.state.redis)))
+        except Exception as exc:
+            print(f"[ERROR] Redis connection failed: {exc}")
+            app.state.redis = None
+    app.state.bg_tasks.append(asyncio.create_task(track_browsers()))
     yield
+    for task in app.state.bg_tasks:
+        task.cancel()
+    if app.state.redis:
+        await app.state.redis.close()
 
 app = FastAPI(lifespan=lifespan)
 
@@ -237,6 +401,47 @@ def normalize_enabled_value(value: Optional[object]) -> bool:
         return True
     return True
 
+def distribute_tasks_evenly(tasks: list, worker_caps: Dict[str, int]) -> Dict[str, list]:
+    worker_ids = [wid for wid, cap in worker_caps.items() if cap > 0]
+    if not tasks or not worker_ids:
+        return {}
+
+    worker_ids.sort()
+    caps = {wid: worker_caps[wid] for wid in worker_ids}
+    total_capacity = sum(caps.values())
+    tasks = tasks[:total_capacity]
+
+    base = len(tasks) // len(worker_ids)
+    remainder = len(tasks) % len(worker_ids)
+    target_counts: Dict[str, int] = {}
+    for idx, wid in enumerate(worker_ids):
+        target = base + (1 if idx < remainder else 0)
+        target_counts[wid] = min(target, caps[wid])
+
+    remaining = len(tasks) - sum(target_counts.values())
+    while remaining > 0:
+        progressed = False
+        for wid in worker_ids:
+            if remaining <= 0:
+                break
+            if target_counts[wid] < caps[wid]:
+                target_counts[wid] += 1
+                remaining -= 1
+                progressed = True
+        if not progressed:
+            break
+
+    queue_map: Dict[str, list] = {wid: [] for wid in worker_ids}
+    index = 0
+    for wid in worker_ids:
+        count = target_counts.get(wid, 0)
+        if count <= 0:
+            continue
+        queue_map[wid] = tasks[index:index + count]
+        index += count
+
+    return queue_map
+
 def today_key() -> str:
     return datetime.now().strftime("%Y-%m-%d")
 
@@ -246,6 +451,14 @@ async def upsert_setting(db: AsyncSession, key: str, value: str) -> None:
         setting.value = value
     else:
         db.add(SettingsModel(key=key, value=value))
+
+async def sync_redis_settings(db: AsyncSession) -> None:
+    await upsert_setting(db, "redis_url", REDIS_URL)
+    await upsert_setting(db, "redis_queue_key", REDIS_QUEUE_KEY)
+    await upsert_setting(db, "redis_events_channel", REDIS_EVENTS_CHANNEL)
+    await upsert_setting(db, "redis_control_channel", REDIS_CONTROL_CHANNEL)
+    await upsert_setting(db, "redis_worker_prefix", REDIS_WORKER_PREFIX)
+    await db.commit()
 
 async def load_message_stats(db: AsyncSession, reset_day: bool = True) -> Dict[str, int]:
     total_row = await db.get(SettingsModel, MESSAGE_STAT_TOTAL_KEY)
@@ -280,7 +493,7 @@ def count_running(name: str) -> int:
     return sum(1 for proc in processes.get(name, []) if proc.poll() is None)
 
 def is_anon_running() -> bool:
-    return count_running("cookie") > 0 or count_running("anon") > 0
+    return distributed_run_active or total_browser_count() > 0 or count_running("anon") > 0
 
 def cleanup_old_profiles() -> None:
     profile_root = os.path.join("data", "temp", "profiles")
@@ -298,6 +511,8 @@ async def stream_logs(
     display_name: Optional[str] = None,
     ready_event: Optional[asyncio.Event] = None,
     ready_phrase: Optional[str] = None,
+    acc_id: Optional[str] = None,
+    slot_index: Optional[int] = None
 ):
     """Stream stdout/stderr from process to Socket.io."""
     log_name = display_name or name
@@ -321,6 +536,10 @@ async def stream_logs(
     rc = process.poll()
     if process in processes.get(name, []):
         processes[name].remove(process)
+
+    if rc != 0 and name == "cookie" and acc_id and not (launch_cancel_event and launch_cancel_event.is_set()):
+        await sio.emit('log', {'name': 'system', 'type': 'warning',
+            'data': f'Process for {display_name} exited with code {rc}. Automatic restart is currently disabled to prevent boot loops, please restart from the panel if needed.'})
     
     # Only emit stopped if no more processes of this name are running
     if not processes.get(name):
@@ -347,20 +566,45 @@ async def wait_for_process_ready(
             return False
         await asyncio.sleep(0.5)
 
+def kill_process_tree(pid: int, timeout: float = 2.0) -> None:
+    try:
+        parent = psutil.Process(pid)
+    except psutil.Error:
+        return
+    children = parent.children(recursive=True)
+    for child in children:
+        try:
+            child.terminate()
+        except psutil.Error:
+            continue
+    try:
+        parent.terminate()
+    except psutil.Error:
+        pass
+    try:
+        psutil.wait_procs([parent] + children, timeout=timeout)
+    except psutil.Error:
+        pass
+    for proc in children:
+        if proc.is_running():
+            try:
+                proc.kill()
+            except psutil.Error:
+                pass
+    if parent.is_running():
+        try:
+            parent.kill()
+        except psutil.Error:
+            pass
+
+
 def stop_process(name: str):
     if processes.get(name):
         print(f"Stopping {len(processes[name])} {name} processes...")
         for proc in processes[name]:
-            try:
-                if os.name == 'nt': # Windows
-                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(proc.pid)], 
-                                 capture_output=True, check=False)
-                else:
-                    proc.terminate()
-                    proc.wait(timeout=2)
-            except Exception as e:
-                print(f"Error stopping process: {e}")
+            stop_single_process(proc)
         processes[name] = []
+
 
 def stop_single_process(proc: subprocess.Popen) -> None:
     if proc.poll() is not None:
@@ -370,8 +614,7 @@ def stop_single_process(proc: subprocess.Popen) -> None:
             subprocess.run(['taskkill', '/F', '/T', '/PID', str(proc.pid)],
                            capture_output=True, check=False)
         else:
-            proc.terminate()
-            proc.wait(timeout=2)
+            kill_process_tree(proc.pid)
     except Exception as e:
         print(f"Error stopping process: {e}")
 
@@ -678,9 +921,10 @@ async def connect(sid, environ, auth=None):
     print(f"Client connected: {sid}")
     for name, procs in processes.items():
         running = bool(procs)
-        if name == "anon":
+        if name in ("anon", "cookie"):
             running = is_anon_running()
         await sio.emit('status', {'name': name, 'status': 'running' if running else 'stopped'}, room=sid)
+    await sio.emit('browser-count', build_browser_count_payload(), room=sid)
 
 @sio.on('disconnect')
 async def disconnect(sid):
@@ -697,6 +941,243 @@ async def ensure_socket_auth(sid: str, required_role: Optional[str] = None) -> b
         return False
     return True
 
+async def start_anon_distributed() -> None:
+    global distributed_run_active, distributed_run_id
+    if not REDIS_ENABLED or not app.state.redis:
+        await sio.emit('log', {'name': 'system', 'type': 'error',
+            'data': 'Redis is not configured. Set REDIS_URL on the main server.'})
+        return
+    if distributed_run_active:
+        await sio.emit('log', {'name': 'system', 'type': 'warning',
+            'data': 'Distributed run already active. Stop it before starting again.'})
+        return
+
+    redis_conn = app.state.redis
+    run_id = uuid.uuid4().hex
+    distributed_run_active = True
+    distributed_run_id = run_id
+
+    try:
+        if is_anon_running():
+            await sio.emit('log', {'name': 'system', 'type': 'info',
+                'data': 'Stopping existing bots before restart...'} )
+            await publish_control(redis_conn, "stop", run_id="")
+            await asyncio.sleep(2)
+
+        cleanup_old_profiles()
+
+        accounts = []
+        targets = []
+        target_username = ""
+        started_count = 0
+        skipped_count = 0
+        cookie_headless = COOKIE_VIEWER_HEADLESS
+        msg_enabled = False
+        msg_min_minutes = 2
+        msg_max_minutes = 5
+        msg_texts_raw = ""
+
+        async with SessionLocal() as db:
+            acc_result = await db.execute(select(AccountModel))
+            target_result = await db.execute(select(TargetModel))
+            accounts = list(acc_result.scalars().all())
+            targets = list(target_result.scalars().all())
+            setting = await db.get(SettingsModel, "cookie_headless")
+            cookie_headless = parse_bool_setting(
+                setting.value if setting else None,
+                COOKIE_VIEWER_HEADLESS,
+            )
+
+            msg_enabled_row = await db.get(SettingsModel, MESSAGE_ENABLED_KEY)
+            msg_enabled = parse_bool_setting(msg_enabled_row.value if msg_enabled_row else None, False)
+            msg_min_row = await db.get(SettingsModel, MESSAGE_MIN_MINUTES_KEY)
+            msg_max_row = await db.get(SettingsModel, MESSAGE_MAX_MINUTES_KEY)
+            msg_min_minutes = parse_int_setting(msg_min_row.value if msg_min_row else None, 2, min_value=2)
+            msg_max_minutes = parse_int_setting(msg_max_row.value if msg_max_row else None, 5, min_value=2)
+            msg_texts_row = await db.get(SettingsModel, MESSAGE_TEXTS_KEY)
+            msg_texts_raw = (msg_texts_row.value if msg_texts_row else "") or ""
+
+        if msg_min_minutes > msg_max_minutes:
+            msg_min_minutes, msg_max_minutes = msg_max_minutes, msg_min_minutes
+
+        msg_texts = [line.strip() for line in msg_texts_raw.splitlines() if line.strip()]
+        msg_min_seconds = max(1, msg_min_minutes) * 60
+        msg_max_seconds = max(msg_min_seconds, msg_max_minutes * 60)
+        msg_enabled = bool(msg_enabled and msg_texts)
+
+        if not accounts:
+            await sio.emit('log', {'name': 'system', 'type': 'error',
+                'data': 'No accounts found! Add accounts in the IDs Manager tab.'})
+            distributed_run_active = False
+            distributed_run_id = None
+            return
+
+        if not targets:
+            await sio.emit('log', {'name': 'system', 'type': 'error',
+                'data': 'No target model defined! Add one in the Target Models tab.'})
+            distributed_run_active = False
+            distributed_run_id = None
+            return
+
+        enabled_targets = [t for t in targets if normalize_enabled_value(t.enabled)]
+        if not enabled_targets:
+            await sio.emit('log', {'name': 'system', 'type': 'error',
+                'data': 'All target models are disabled. Enable one to start.'})
+            distributed_run_active = False
+            distributed_run_id = None
+            return
+
+        target_username = enabled_targets[0].username
+
+        workers = await fetch_active_workers(redis_conn)
+        if not workers:
+            await sio.emit('log', {'name': 'system', 'type': 'error',
+                'data': 'No active workers found. Start worker.py on your servers.'})
+            distributed_run_active = False
+            distributed_run_id = None
+            return
+
+        worker_slots: Dict[str, int] = {}
+        total_capacity = 0
+        for worker in workers:
+            worker_id = str(worker.get("id") or "").strip()
+            if not worker_id:
+                continue
+            max_profiles = parse_int_setting(worker.get("max_profiles"), 0, min_value=0)
+            running = parse_int_setting(worker.get("running"), 0, min_value=0)
+            effective_max = max_profiles if max_profiles > 0 else MAX_PROFILES_PER_SERVER
+            per_worker_cap = min(effective_max, MAX_PROFILES_PER_SERVER)
+            free_slots = max(0, per_worker_cap - running)
+            worker_slots[worker_id] = free_slots
+            total_capacity += free_slots
+
+        if total_capacity <= 0:
+            await sio.emit('log', {'name': 'system', 'type': 'error',
+                'data': 'Workers are online but have no free slots. Stop existing bots first.'})
+            distributed_run_active = False
+            distributed_run_id = None
+            return
+
+        launchable_accounts = []
+        for acc in accounts:
+            if not normalize_enabled_value(acc.enabled):
+                skipped_count += 1
+                continue
+            if not acc.cookies:
+                await sio.emit('log', {'name': 'system', 'type': 'warning',
+                    'data': f'Skipping {acc.username} - no cookies set.'})
+                skipped_count += 1
+                continue
+            launchable_accounts.append(acc)
+
+        if not launchable_accounts:
+            await sio.emit('log', {'name': 'system', 'type': 'error',
+                'data': 'No enabled accounts with cookies. Enable at least one to start.'})
+            distributed_run_active = False
+            distributed_run_id = None
+            return
+
+        if len(launchable_accounts) > total_capacity:
+            overflow = len(launchable_accounts) - total_capacity
+            skipped_count += overflow
+            launchable_accounts = launchable_accounts[:total_capacity]
+
+        tasks = []
+        for acc in launchable_accounts:
+            try:
+                cookies_obj = json.loads(acc.cookies)
+                if isinstance(cookies_obj, dict) and "cookies" in cookies_obj:
+                    cookies_obj = cookies_obj["cookies"]
+                if not isinstance(cookies_obj, list):
+                    raise ValueError("Invalid cookies payload")
+            except Exception:
+                await sio.emit('log', {'name': 'system', 'type': 'warning',
+                    'data': f'Skipping {acc.username} - invalid cookies JSON.'})
+                skipped_count += 1
+                continue
+
+            proxy = ""
+            if acc.proxies and acc.proxies.strip():
+                proxy = acc.proxies.splitlines()[0].strip()
+
+            tasks.append({
+                "run_id": run_id,
+                "account_id": acc.id,
+                "account_username": acc.username,
+                "cookies": cookies_obj,
+                "proxy": proxy,
+                "target_username": target_username,
+                "headless": cookie_headless,
+                "msg_enabled": msg_enabled,
+                "msg_min_seconds": msg_min_seconds,
+                "msg_max_seconds": msg_max_seconds,
+                "msg_texts": msg_texts,
+            })
+
+        if not tasks:
+            await sio.emit('log', {'name': 'system', 'type': 'error',
+                'data': 'No valid accounts available to launch.'})
+            distributed_run_active = False
+            distributed_run_id = None
+            return
+
+        worker_ids = [wid for wid, slots in worker_slots.items() if slots > 0]
+        worker_ids.sort()
+        queue_map: Dict[str, list] = {wid: [] for wid in worker_ids}
+        worker_index = 0
+        for task in tasks:
+            if not worker_ids:
+                break
+            attempts = 0
+            while attempts < len(worker_ids) and worker_slots[worker_ids[worker_index]] <= 0:
+                worker_index = (worker_index + 1) % len(worker_ids)
+                attempts += 1
+            if worker_slots[worker_ids[worker_index]] <= 0:
+                break
+            target_worker = worker_ids[worker_index]
+            queue_map[target_worker].append(task)
+            worker_slots[target_worker] -= 1
+            worker_index = (worker_index + 1) % len(worker_ids)
+
+        queue_keys = [REDIS_QUEUE_KEY] + [f"{REDIS_QUEUE_KEY}:{wid}" for wid in worker_ids]
+        await redis_conn.delete(*queue_keys)
+
+        pipe = redis_conn.pipeline()
+        for worker_id, items in queue_map.items():
+            if not items:
+                continue
+            queue_key = f"{REDIS_QUEUE_KEY}:{worker_id}"
+            batch = []
+            for task in items:
+                batch.append(json.dumps(task))
+                if len(batch) >= 100:
+                    pipe.rpush(queue_key, *batch)
+                    batch = []
+            if batch:
+                pipe.rpush(queue_key, *batch)
+        await pipe.execute()
+
+        started_count = sum(len(items) for items in queue_map.values())
+        await sio.emit('log', {'name': 'system', 'type': 'info',
+            'data': f'Queued {started_count} browser(s) for {target_username} across {len(workers)} worker(s).'} )
+        await sio.emit('status', {'name': 'anon',   'status': 'running'})
+        await sio.emit('status', {'name': 'cookie', 'status': 'running'})
+
+        async with SessionLocal() as db:
+            await send_telegram(
+                f"BEY CB BOT STARTED (DISTRIBUTED)\n"
+                f"Target: {target_username}\n"
+                f"Browsers queued: {started_count}\n"
+                f"Skipped: {skipped_count}\n"
+                f"Workers online: {len(workers)}",
+                db
+            )
+    except Exception as exc:
+        distributed_run_active = False
+        distributed_run_id = None
+        await sio.emit('log', {'name': 'system', 'type': 'error',
+            'data': f'Distributed launch failed: {exc}'})
+
 @sio.on('start-anon')
 async def start_anon(sid, data):
     """Start one browser per account (cookie viewer)."""
@@ -709,12 +1190,15 @@ async def start_anon(sid, data):
         return
     launch_in_progress = True
     try:
-        if is_anon_running():
-            await sio.emit('log', {'name': 'system', 'type': 'warning',
-                'data': 'Bots are already running. Stop them before starting again.'})
-            await sio.emit('status', {'name': 'anon',   'status': 'running'})
-            await sio.emit('status', {'name': 'cookie', 'status': 'running'})
+        if REDIS_ENABLED:
+            await start_anon_distributed()
             return
+        # Stop any existing processes before starting new ones to ensure a clean state
+        if is_anon_running():
+             await sio.emit('log', {'name': 'system', 'type': 'info', 'data': 'Stopping existing bots before restart...'})
+             stop_process("anon")
+             stop_process("cookie")
+             await asyncio.sleep(2)
         global launch_cancel_event
         launch_cancel_event = asyncio.Event()
 
@@ -785,9 +1269,8 @@ async def start_anon(sid, data):
         launchable_accounts = []
         for acc in accounts:
             if not normalize_enabled_value(acc.enabled):
-                display_name = acc.username or acc.id
-                await sio.emit('log', {'name': 'system', 'type': 'warning',
-                    'data': f'Skipping {display_name} - automation disabled.'})
+                # Only log skipping if there was a reason to think it might run
+                # To avoid log spam, we just silently skip truly disabled accounts
                 skipped_count += 1
                 continue
             if not acc.cookies:
@@ -804,14 +1287,30 @@ async def start_anon(sid, data):
             await sio.emit('status', {'name': 'cookie', 'status': 'stopped'})
             return
 
+        if len(launchable_accounts) > MAX_PROFILES_PER_SERVER:
+            overflow = len(launchable_accounts) - MAX_PROFILES_PER_SERVER
+            skipped_count += overflow
+            launchable_accounts = launchable_accounts[:MAX_PROFILES_PER_SERVER]
+            await sio.emit('log', {'name': 'system', 'type': 'warning',
+                'data': f'Local server cap is {MAX_PROFILES_PER_SERVER} browsers. Skipping {overflow} account(s).'} )
+
         target_username = enabled_targets[0].username
         enabled_count = len(launchable_accounts)
         await sio.emit('log', {'name': 'system', 'type': 'info',
-            'data': f'Starting {enabled_count} account browser(s) for {target_username}...'})
+            'data': f'Launching {enabled_count} browsers total for {target_username} (sequential batch mode).'})
 
         tile_total = len(launchable_accounts)
+
+        # Get batch settings or use defaults
+        batch_size_row = await db.get(SettingsModel, "launch_batch_size")
+        batch_delay_row = await db.get(SettingsModel, "launch_batch_delay")
+        instance_delay_row = await db.get(SettingsModel, "launch_instance_delay")
+
+        batch_size = parse_int_setting(batch_size_row.value if batch_size_row else None, 3, min_value=1)
+        batch_delay = parse_int_setting(batch_delay_row.value if batch_delay_row else None, 10, min_value=0)
+        instance_delay = parse_int_setting(instance_delay_row.value if instance_delay_row else None, 2, min_value=0)
+
         tile_cols = 5
-        batch_size = 5
 
         os.makedirs('data/temp', exist_ok=True)
 
@@ -880,6 +1379,8 @@ async def start_anon(sid, data):
                         display_name=f"cookie:{acc.username}",
                         ready_event=ready_event,
                         ready_phrase=READY_LOG_PHRASE,
+                        acc_id=acc.id,
+                        slot_index=slot_index
                     ))
 
                     await sio.emit('log', {'name': 'system', 'type': 'info',
@@ -920,24 +1421,39 @@ async def start_anon(sid, data):
                 await sio.emit('log', {'name': 'system', 'type': 'error',
                     'data': f'Error starting {acc.username}: {e}'})
 
-        for batch_start in range(0, len(launchable_accounts), batch_size):
+        for i, batch_start in enumerate(range(0, len(launchable_accounts), batch_size)):
             if cancel_event.is_set():
                 await sio.emit('log', {'name': 'system', 'type': 'warning',
                     'data': 'Launch cancelled by user.'})
                 break
+
+            if i > 0 and batch_delay > 0:
+                await sio.emit('log', {'name': 'system', 'type': 'info',
+                    'data': f'Waiting {batch_delay}s before next batch...'})
+                await asyncio.sleep(batch_delay)
+
             batch = launchable_accounts[batch_start:batch_start + batch_size]
-            tasks = []
-            for acc in batch:
+            batch_tasks = []
+            for j, acc in enumerate(batch):
+                if cancel_event.is_set():
+                    break
+                if j > 0 and instance_delay > 0:
+                    await asyncio.sleep(instance_delay)
+
                 slot_index = tile_index
                 tile_index += 1
-                tasks.append(asyncio.create_task(launch_account(acc, slot_index)))
-            await asyncio.gather(*tasks)
+                batch_tasks.append(asyncio.create_task(launch_account(acc, slot_index)))
+
+            # Await the completion of the launch_account tasks for THIS batch
+            # This ensures they have reached the target room or timed out before we move to the next batch.
+            if batch_tasks:
+                await asyncio.gather(*batch_tasks)
 
         if not cancel_event.is_set():
             # ── Summary ───────────────────────────────────────────────────────────
             await sio.emit('log', {'name': 'system', 'type': 'info',
                 'data': f'Done! {started_count} browser(s) launched, {skipped_count} skipped.'})
-            await sio.emit('browser-count', {'count': started_count})
+            await sio.emit('browser-count', build_browser_count_payload())
             await sio.emit('status', {'name': 'anon',   'status': 'running'})
             await sio.emit('status', {'name': 'cookie', 'status': 'running'})
 
@@ -964,9 +1480,19 @@ async def start_anon(sid, data):
 async def stop_anon(sid):
     if not await ensure_socket_auth(sid, required_role="admin"):
         return
-    global launch_cancel_event
+    global launch_cancel_event, distributed_run_active, distributed_run_id
     if launch_cancel_event:
         launch_cancel_event.set()
+    if REDIS_ENABLED and app.state.redis:
+        await publish_control(app.state.redis, "stop", run_id=distributed_run_id or "")
+        workers = await fetch_active_workers(app.state.redis)
+        worker_ids = [str(w.get("id") or "").strip() for w in workers]
+        queue_keys = [REDIS_QUEUE_KEY] + [f"{REDIS_QUEUE_KEY}:{wid}" for wid in worker_ids if wid]
+        await app.state.redis.delete(*queue_keys)
+        distributed_run_active = False
+        distributed_run_id = None
+        worker_browser_counts.clear()
+        worker_browser_platforms.clear()
     stop_process("anon")
     stop_process("cookie")
     async with SessionLocal() as db:

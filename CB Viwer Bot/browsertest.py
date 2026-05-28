@@ -3,7 +3,6 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 import time
-from core.net_throttle import apply_network_throttle
 
 def open_multiple_browsers(num_browsers=5, width=300, height=300):
     drivers = []
@@ -14,7 +13,6 @@ def open_multiple_browsers(num_browsers=5, width=300, height=300):
         
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=chrome_options)
-        apply_network_throttle(driver)
         
         driver.get("https://www.google.com")
         drivers.append(driver)

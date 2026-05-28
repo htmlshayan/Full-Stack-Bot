@@ -1,3 +1,4 @@
+import os
 import time
 import random
 import logging
@@ -9,7 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from core.net_throttle import apply_network_throttle
+from core.chrome import resolve_chrome_binary
 
 logger = logging.getLogger("cb_bot.core.solver")
 
@@ -117,12 +118,49 @@ class CloudflareSolver:
         if self.headless:
             options.add_argument("--headless=new")
         
+        # Optimization flags
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-software-rasterizer")
+        options.add_argument("--mute-audio")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-background-networking")
+        options.add_argument("--disable-breakpad")
+        options.add_argument("--disable-component-update")
+        options.add_argument("--disable-domain-reliability")
+        options.add_argument("--disable-sync")
+        options.add_argument("--js-flags=--max-old-space-size=256")
+        options.add_argument("--disk-cache-size=1048576")
+        options.add_argument("--media-cache-size=1048576")
+
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--disable-infobars")
-        options.add_argument("--window-size=1280,720")
+        options.add_argument("--window-size=800,600")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
 
+        # Disable images
+        prefs = {
+            "profile.managed_default_content_settings.images": 2,
+            "profile.default_content_setting_values.notifications": 2,
+        }
+        options.add_experimental_option("prefs", prefs)
+
+        chrome_binary = resolve_chrome_binary()
+        if chrome_binary:
+            options.binary_location = chrome_binary
+
+            uc_kwargs = {"options": options}
+            if chrome_binary:
+                uc_kwargs["browser_executable_path"] = chrome_binary
+            use_subprocess = os.getenv("UC_USE_SUBPROCESS", "").strip().lower() in (
+                "1",
+                "true",
+                "yes",
+                "y",
+                "on",
+            )
+            if use_subprocess:
+                uc_kwargs["use_subprocess"] = True
         if self.proxy:
             plugin_path = self.get_proxy_extension(self.proxy)
             if plugin_path:
@@ -137,7 +175,6 @@ class CloudflareSolver:
             )
         except Exception:
             pass
-        apply_network_throttle(self.driver)
         return self.driver
 
     def human_click(self, element) -> None:
