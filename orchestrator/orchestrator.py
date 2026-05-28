@@ -495,7 +495,14 @@ def main() -> None:
         orchestrator.stop_event.set()
 
     signal.signal(signal.SIGINT, _handle_stop)
-    signal.signal(signal.SIGTERM, _handle_stop)
+    for sig_name in ("SIGTERM", "SIGBREAK"):
+        sig = getattr(signal, sig_name, None)
+        if sig is None:
+            continue
+        try:
+            signal.signal(sig, _handle_stop)
+        except (ValueError, OSError, RuntimeError):
+            pass
 
     try:
         loop.run_until_complete(orchestrator.run())
