@@ -9,8 +9,13 @@ import sys
 import time
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+ENV_PATH = PROJECT_ROOT / ".env"
+if ENV_PATH.is_file():
+    load_dotenv(ENV_PATH)
 
 
 def _require_cloudflared() -> None:
