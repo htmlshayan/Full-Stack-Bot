@@ -1,2 +1,3 @@
 docker run -d --name redis-shared -p 6379:6379 redis:7-alpine
 docker run -d --name redis-cb -p 6380:6379 redis:7-alpine
+python "CB Viwer Bot/migrate_sqlite_to_postgres.py" --postgres postgresql://postgres:%23beyservers%21@127.0.0.1:5432/bot
